@@ -1,0 +1,8 @@
+{
+  "robot_counts": [5, 10, 20, 50, 100],
+  "seeds": [1, 2, 3],
+  "max_iterations": 300,
+  "limited_range_robots": 50,
+  "limited_range_iterations": 200,
+  "radius_factors": [1.0, 1.5, 2.0, 3.0]
+}
