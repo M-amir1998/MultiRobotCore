@@ -19,20 +19,17 @@ DoubleIntegratorState step_double_integrator(const DoubleIntegratorState& state,
 
 UnicycleState step_unicycle(const UnicycleState& state, const UnicycleInput& input,
                             double dt) noexcept {
-  const double theta = state.heading;
-  const double v = input.linear;
-  const double w = input.angular;
+  // Exact arc integration written in a form that is numerically stable for
+  // every yaw rate, including omega -> 0:
+  //   dp = v dt sinc(omega dt / 2) [cos(theta + omega dt / 2), sin(theta + omega dt / 2)]
+  const double half_turn = 0.5 * input.angular * dt;
+  const double sinc = std::abs(half_turn) < 1e-4 ? 1.0 - half_turn * half_turn / 6.0
+                                                 : std::sin(half_turn) / half_turn;
+  const double mid_heading = state.heading + half_turn;
   UnicycleState next;
-  if (std::abs(w) < 1e-9) {
-    next.position = state.position + v * dt * Vec2(std::cos(theta), std::sin(theta));
-    next.heading = math::wrap_angle(theta + w * dt);
-    return next;
-  }
-  const double theta_next = theta + w * dt;
-  const double r = v / w;
-  next.position = state.position + r * Vec2(std::sin(theta_next) - std::sin(theta),
-                                            -std::cos(theta_next) + std::cos(theta));
-  next.heading = math::wrap_angle(theta_next);
+  next.position = state.position +
+                  input.linear * dt * sinc * Vec2(std::cos(mid_heading), std::sin(mid_heading));
+  next.heading = math::wrap_angle(state.heading + input.angular * dt);
   return next;
 }
 
