@@ -1,0 +1,17 @@
+{
+  "map": "scenarios/exploration/office.txt",
+  "resolution": 0.5,
+  "robot_speed": 0.5,
+  "starts": [[2, 19], [3, 19], [2, 20], [3, 20]],
+  "strategy": "hungarian",
+  "compare_strategies": ["nearest_frontier", "hungarian", "utility_discount"],
+  "sensor": {"range": 3.0, "beams": 180},
+  "planner": {
+    "information_weight": 1.0,
+    "cost_weight": 1.0,
+    "discount_radius": 3.0,
+    "min_cluster_size": 3
+  },
+  "replan_period": 8,
+  "max_steps": 2000
+}
