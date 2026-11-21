@@ -1,0 +1,78 @@
+{
+  "seed": 23,
+  "field": {
+    "min": [
+      0.0,
+      0.0
+    ],
+    "max": [
+      14.0,
+      9.0
+    ]
+  },
+  "num_robots": 8,
+  "num_tasks": 8,
+  "robot_radius": 0.22,
+  "max_speed": 1.0,
+  "dt": 0.05,
+  "auction_epsilon": 0.4,
+  "execution_time": 14.0,
+  "dynamic": {
+    "num_robots": 6,
+    "initial_tasks": 10,
+    "arrivals": [
+      {
+        "time": 4.0,
+        "position": [
+          12.5,
+          1.5
+        ]
+      },
+      {
+        "time": 6.0,
+        "position": [
+          1.5,
+          7.5
+        ]
+      },
+      {
+        "time": 9.0,
+        "position": [
+          7.0,
+          8.0
+        ]
+      },
+      {
+        "time": 11.0,
+        "position": [
+          13.0,
+          7.5
+        ]
+      },
+      {
+        "time": 14.0,
+        "position": [
+          2.0,
+          1.0
+        ]
+      },
+      {
+        "time": 17.0,
+        "position": [
+          8.0,
+          1.0
+        ]
+      }
+    ],
+    "cancellations": [
+      {
+        "time": 7.0,
+        "task": 11
+      }
+    ],
+    "service_time": 1.5,
+    "switching_penalty": 0.5,
+    "commit_distance": 1.0,
+    "duration": 32.0
+  }
+}
