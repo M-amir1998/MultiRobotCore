@@ -1,0 +1,15 @@
+{
+  "seeds": 5,
+  "team_sizes": [5, 10, 20, 50, 100, 200],
+  "shapes": [
+    {"name": "equal", "tasks_per_robot": 1.0},
+    {"name": "more_tasks", "tasks_per_robot": 2.0},
+    {"name": "more_robots", "tasks_per_robot": 0.5}
+  ],
+  "dynamic": {
+    "robots": 8,
+    "arrival_rate": 0.6,
+    "horizon": 120.0,
+    "switching_penalties": [0.0, 0.5, 2.0, 5.0]
+  }
+}
