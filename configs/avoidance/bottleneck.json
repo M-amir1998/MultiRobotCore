@@ -1,0 +1,25 @@
+{
+  "seed": 5,
+  "robot_radius": 0.25,
+  "max_speed": 1.0,
+  "dt": 0.05,
+  "duration": 60.0,
+  "preference_perturbation": 0.05,
+  "goal_tolerance": 0.1,
+  "record_every": 2,
+  "stall_window": 6.0,
+  "method": "orca",
+  "scenarios": [
+    {"type": "doorway", "num_robots": 16, "door_width": 1.2},
+    {"type": "doorway_counterflow", "num_robots": 16, "door_width": 1.2},
+    {"type": "corridor_swap", "per_side": 3, "corridor_width": 0.9}
+  ],
+  "avoidance": {
+    "time_horizon": 3.0,
+    "obstacle_time_horizon": 1.0,
+    "neighbor_distance": 5.0,
+    "max_neighbors": 16,
+    "safety_margin": 0.02,
+    "obstacle_disc_spacing": 0.15
+  }
+}

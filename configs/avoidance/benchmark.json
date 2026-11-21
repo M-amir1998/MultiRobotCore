@@ -1,0 +1,24 @@
+{
+  "seed": 11,
+  "methods": ["vo", "rvo", "orca"],
+  "robot_counts": [5, 10, 20, 50],
+  "orca_only_counts": [100],
+  "scenarios": ["circle_swap", "random_crossing", "doorway"],
+  "robot_radius": 0.25,
+  "max_speed": 1.0,
+  "dt": 0.05,
+  "preference_perturbation": 0.05,
+  "goal_tolerance": 0.1,
+  "door_width": 1.2,
+  "avoidance": {
+    "time_horizon": 4.0,
+    "obstacle_time_horizon": 1.0,
+    "neighbor_distance": 6.0,
+    "max_neighbors": 16,
+    "safety_margin": 0.02,
+    "obstacle_disc_spacing": 0.15,
+    "speed_rings": 5,
+    "angle_samples": 24,
+    "penalty_weight": 1.0
+  }
+}

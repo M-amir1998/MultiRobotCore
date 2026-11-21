@@ -1,0 +1,32 @@
+{
+  "seed": 3,
+  "num_robots": 20,
+  "circle_radius": 8.0,
+  "robot_radius": 0.3,
+  "max_speed": 1.0,
+  "dt": 0.05,
+  "duration": 70.0,
+  "placement_jitter": 0.05,
+  "preference_perturbation": 0.05,
+  "goal_tolerance": 0.05,
+  "record_every": 2,
+  "methods": [
+    "orca",
+    "rvo",
+    "vo"
+  ],
+  "recorded_methods": [
+    "orca",
+    "vo"
+  ],
+  "avoidance": {
+    "time_horizon": 5.0,
+    "obstacle_time_horizon": 1.5,
+    "neighbor_distance": 10.0,
+    "max_neighbors": 20,
+    "safety_margin": 0.02,
+    "speed_rings": 6,
+    "angle_samples": 36,
+    "penalty_weight": 1.0
+  }
+}
