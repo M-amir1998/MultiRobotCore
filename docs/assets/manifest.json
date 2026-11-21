@@ -1,0 +1,175 @@
+{
+  "assets": {
+    "allocation_dynamic.gif": {
+      "scenario": "6 robots, arrivals + cancellation",
+      "algorithm": "dynamic reallocation with hysteresis",
+      "seed": 23,
+      "config": "configs/allocation/allocation.json",
+      "script": "scripts/render/render_allocation.py",
+      "source_commit": "11bbf9a",
+      "bytes": 869620
+    },
+    "auction.gif": {
+      "scenario": "8 robots, 8 tasks",
+      "algorithm": "Jacobi auction",
+      "seed": 23,
+      "config": "configs/allocation/allocation.json",
+      "script": "scripts/render/render_allocation.py",
+      "source_commit": "11bbf9a",
+      "bytes": 203332
+    },
+    "avoidance_bottleneck.gif": {
+      "scenario": "doorway one-way/counterflow, corridor swap",
+      "algorithm": "ORCA",
+      "seed": 5,
+      "config": "configs/avoidance/bottleneck.json",
+      "script": "scripts/render/render_bottleneck.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1110020
+    },
+    "cbs.gif": {
+      "scenario": "one-lane intersection, 4 robots",
+      "algorithm": "independent A* vs Conflict-Based Search",
+      "seed": null,
+      "config": "configs/mapf/conflicts.json",
+      "script": "scripts/render/render_cbs.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1298432
+    },
+    "circle_swap.gif": {
+      "scenario": "circle swap, 20 robots",
+      "algorithm": "ORCA vs. sampling VO",
+      "seed": 3,
+      "config": "configs/avoidance/circle_swap.json",
+      "script": "scripts/render/render_circle_swap.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1827280
+    },
+    "consensus.gif": {
+      "scenario": "ring with chords, 12 agents",
+      "algorithm": "discrete average consensus",
+      "seed": 7,
+      "config": "configs/consensus/consensus.json",
+      "script": "scripts/render/render_consensus.py",
+      "source_commit": "11bbf9a",
+      "bytes": 841678
+    },
+    "consensus_partition.gif": {
+      "scenario": "ring, link outages + 5% loss",
+      "algorithm": "message-passing consensus",
+      "seed": 7,
+      "config": "configs/consensus/consensus.json",
+      "script": "scripts/render/render_consensus.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1129470
+    },
+    "coverage_distributed.gif": {
+      "scenario": "16 robots, R = 4.5 m",
+      "algorithm": "limited-range coverage",
+      "seed": 3,
+      "config": "configs/coverage/coverage.json",
+      "script": "scripts/render/render_voronoi_coverage.py",
+      "source_commit": "11bbf9a",
+      "bytes": 3345580
+    },
+    "distributed_optimization.gif": {
+      "scenario": "10 robots, noisy bearings, disk graph",
+      "algorithm": "DGD + decentralised consensus ADMM",
+      "seed": 5,
+      "config": "configs/optimization/distributed_optimization.json",
+      "script": "scripts/render/render_distributed_optimization.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1802167
+    },
+    "exploration.gif": {
+      "scenario": "office map 60x40 cells, 4 robots",
+      "algorithm": "frontier exploration (hungarian)",
+      "seed": null,
+      "config": "configs/exploration/exploration.json",
+      "script": "scripts/render/render_exploration.py",
+      "source_commit": "11bbf9a",
+      "bytes": 2506957
+    },
+    "formation.gif": {
+      "scenario": "7 robots, passage between two walls",
+      "algorithm": "leader-pinned consensus formation + shape transitions",
+      "seed": 11,
+      "config": "configs/formation/formation.json",
+      "script": "scripts/render/render_formation.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1584572
+    },
+    "formation_leader_loss.gif": {
+      "scenario": "leader failure at t = 14 s",
+      "algorithm": "leader-follower formation + min-ID re-election",
+      "seed": 11,
+      "config": "configs/formation/formation.json",
+      "script": "scripts/render/render_formation.py",
+      "source_commit": "11bbf9a",
+      "bytes": 2160371
+    },
+    "formation_transitions.gif": {
+      "scenario": "8 robots, in place",
+      "algorithm": "assignment-based formation transitions",
+      "seed": 11,
+      "config": "configs/formation/formation.json",
+      "script": "scripts/render/render_formation.py",
+      "source_commit": "11bbf9a",
+      "bytes": 443948
+    },
+    "hungarian.gif": {
+      "scenario": "8 robots, 8 tasks",
+      "algorithm": "Hungarian assignment",
+      "seed": 23,
+      "config": "configs/allocation/allocation.json",
+      "script": "scripts/render/render_allocation.py",
+      "source_commit": "11bbf9a",
+      "bytes": 395783
+    },
+    "mapf_warehouse.gif": {
+      "scenario": "warehouse 31x13, 24 robots, stations to shelves",
+      "algorithm": "prioritized planning (CBS on a subset)",
+      "seed": 11,
+      "config": "configs/mapf/warehouse.json",
+      "script": "scripts/render/render_mapf_warehouse.py",
+      "source_commit": "11bbf9a",
+      "bytes": 2741853
+    },
+    "rendezvous.gif": {
+      "scenario": "12 robots, disk graph",
+      "algorithm": "rendezvous (consensus + separation)",
+      "seed": 7,
+      "config": "configs/consensus/consensus.json",
+      "script": "scripts/render/render_consensus.py",
+      "source_commit": "11bbf9a",
+      "bytes": 1110434
+    },
+    "velocity_obstacles.gif": {
+      "scenario": "4 robots crossing",
+      "algorithm": "velocity obstacles + ORCA",
+      "seed": 2,
+      "config": "configs/avoidance/velocity_space.json",
+      "script": "scripts/render/render_velocity_obstacles.py",
+      "source_commit": "11bbf9a",
+      "bytes": 2089526
+    },
+    "voronoi_coverage.gif": {
+      "scenario": "16 robots, 12 x 9 m, 3-bump density",
+      "algorithm": "Lloyd/CVT gradient flow",
+      "seed": 3,
+      "config": "configs/coverage/coverage.json",
+      "script": "scripts/render/render_voronoi_coverage.py",
+      "source_commit": "11bbf9a",
+      "bytes": 3788573
+    },
+    "warehouse_hero.gif": {
+      "scenario": "12 robots, 31 x 13 m warehouse, task arrivals",
+      "algorithm": "Hungarian allocation + prioritized planning/CBS + ORCA",
+      "seed": 7,
+      "config": "configs/warehouse/warehouse_mission.json",
+      "script": "scripts/render/render_warehouse.py",
+      "source_commit": "11bbf9a",
+      "bytes": 4439458
+    }
+  }
+}
