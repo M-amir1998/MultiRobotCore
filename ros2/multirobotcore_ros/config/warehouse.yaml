@@ -1,0 +1,44 @@
+# Parameters of the warehouse demo (same values as
+# configs/warehouse/warehouse_mission.json in the core repository).
+#
+# Everything is under the wildcard namespace on purpose: ROS 2 gives
+# node-specific YAML entries precedence over wildcard ones regardless of
+# order, so keeping one namespace lets launch-file overrides (which are
+# wildcard entries) take effect. Each node reads only the keys it declares.
+/**:
+  ros__parameters:
+    layout:
+      shelf_block_columns: 4
+      shelf_block_rows: 4
+      shelf_length: 5
+      shelf_depth: 2
+      aisle_width: 1
+      station_margin: 3
+    num_robots: 12
+    cell_size: 1.0
+    step_duration: 1.0
+    dt: 0.05
+    seed: 7
+    service_steps: 2
+    robot_radius: 0.25
+    max_speed: 1.3
+    max_acceleration: 4.0
+    tracking_gain: 2.5
+    orca_time_horizon: 0.6
+    avoid_shelves: true
+    planner: prioritized
+    prioritized_attempts: 20
+    cbs_time_limit: 1.0
+    frame_id: map
+    # fleet_simulator
+    real_time_factor: 1.0
+    command_timeout: 0.5
+    # warehouse_coordinator
+    control_rate: 20.0
+    task_rate: 0.22
+    initial_tasks: 12
+    task_horizon: 85.0
+    # orca_safety
+    method: orca
+    neighbor_distance: 3.0
+    max_neighbors: 8

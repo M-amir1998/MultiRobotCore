@@ -63,6 +63,9 @@ function(mrc_set_project_warnings target)
     set(_warnings ${_gnu_warnings})
     if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
       list(APPEND _warnings -Wmisleading-indentation -Wduplicated-cond -Wlogical-op)
+      # GCC's -Wnull-dereference reports false positives inside libstdc++
+      # containers at -O2 (GCC 12/13); it stays enabled for Clang.
+      list(REMOVE_ITEM _warnings -Wnull-dereference)
     endif()
     if(MULTIROBOTCORE_WARNINGS_AS_ERRORS)
       list(APPEND _warnings -Werror)
