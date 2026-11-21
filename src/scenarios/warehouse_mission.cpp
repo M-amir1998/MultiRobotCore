@@ -13,8 +13,6 @@
 #include <chrono>
 #include <cmath>
 #include <limits>
-#include <map>
-#include <random>
 #include <stdexcept>
 #include <utility>
 
@@ -38,34 +36,6 @@ double exponential(std::mt19937_64& rng, double rate) {
   return -std::log(1.0 - uniform01(rng)) / rate;
 }
 
-struct RobotPlanState {
-  WarehouseRobotState state{WarehouseRobotState::kIdle};
-  Cell home;
-  Cell goal;
-  std::optional<std::size_t> task;
-  std::size_t service_until{0};
-};
-
-class DistanceCache {
- public:
-  explicit DistanceCache(const mapf::GridMap& map) : map_(map) {}
-
-  /// BFS distance (steps) from `from` to `to`; +infinity when unreachable.
-  double distance(Cell from, Cell to) {
-    const int key = map_.index(to);
-    auto it = cache_.find(key);
-    if (it == cache_.end()) {
-      it = cache_.emplace(key, map_.distances_from(to)).first;
-    }
-    const int d = it->second[static_cast<std::size_t>(map_.index(from))];
-    return d < 0 ? std::numeric_limits<double>::infinity() : static_cast<double>(d);
-  }
-
- private:
-  const mapf::GridMap& map_;
-  std::map<int, std::vector<int>> cache_;
-};
-
 }  // namespace
 
 std::string_view to_string(WarehouseRobotState state) noexcept {
@@ -84,46 +54,338 @@ std::string_view to_string(WarehouseRobotState state) noexcept {
   return "unknown";
 }
 
+// --- WarehouseCoordinator -----------------------------------------------------------
+
+WarehouseCoordinator::WarehouseCoordinator(const WarehouseMissionConfig& config)
+    : config_(config),
+      warehouse_(mapf::make_warehouse(config.layout)),
+      frame_{Vec2::Zero(), config.cell_size},
+      rng_(config.seed) {
+  if (config_.num_robots == 0 || !(config_.step_duration > 0.0) || !(config_.cell_size > 0.0)) {
+    throw std::invalid_argument("WarehouseCoordinator: invalid configuration");
+  }
+  for (const Cell c : warehouse_.stations) {
+    (c.x == 0 ? stations_ : homes_).push_back(c);
+  }
+  if (homes_.size() < config_.num_robots) {
+    throw std::invalid_argument("WarehouseCoordinator: more robots than home cells");
+  }
+  robots_.resize(config_.num_robots);
+  plan_.resize(config_.num_robots);
+  for (std::size_t i = 0; i < robots_.size(); ++i) {
+    robots_[i].home = homes_[(i * homes_.size()) / robots_.size()];
+    robots_[i].goal = robots_[i].home;
+    plan_[i] = {robots_[i].home};
+  }
+}
+
+std::vector<Pose2> WarehouseCoordinator::home_poses() const {
+  std::vector<Pose2> poses;
+  for (const Robot& r : robots_) {
+    poses.push_back({frame_.to_world(r.home), math::kPi});
+  }
+  return poses;
+}
+
+math::ObstacleSet WarehouseCoordinator::shelf_obstacles() const {
+  math::ObstacleSet out;
+  const auto& map = warehouse_.map;
+  for (int y = 0; y < map.height(); ++y) {
+    for (int x = 0; x < map.width(); ++x) {
+      if (!map.is_free({x, y})) {
+        const Vec2 lo = frame_.origin + config_.cell_size * Vec2(x, y);
+        out.boxes.push_back({lo, lo + Vec2(config_.cell_size, config_.cell_size)});
+      }
+    }
+  }
+  return out;
+}
+
+Cell WarehouseCoordinator::planned_cell(std::size_t robot, std::size_t step) const {
+  return mapf::position_at(plan_[robot], step >= plan_start_ ? step - plan_start_ : 0);
+}
+
+double WarehouseCoordinator::grid_distance(Cell from, Cell to) {
+  const int key = warehouse_.map.index(to);
+  auto it = std::find_if(distance_cache_.begin(), distance_cache_.end(),
+                         [key](const auto& entry) { return entry.first == key; });
+  if (it == distance_cache_.end()) {
+    distance_cache_.emplace_back(key, warehouse_.map.distances_from(to));
+    it = std::prev(distance_cache_.end());
+  }
+  const int d = it->second[static_cast<std::size_t>(warehouse_.map.index(from))];
+  return d < 0 ? std::numeric_limits<double>::infinity() : static_cast<double>(d);
+}
+
+std::optional<std::size_t> WarehouseCoordinator::request_task(double time,
+                                                              std::optional<Vec2> near) {
+  std::vector<Cell> free_pickups;
+  for (const Cell c : warehouse_.pickups) {
+    const bool taken = std::any_of(tasks_.begin(), tasks_.end(), [&](const WarehouseTask& t) {
+      return t.delivered_time < 0.0 && t.pickup == c;
+    });
+    if (!taken) {
+      free_pickups.push_back(c);
+    }
+  }
+  if (free_pickups.empty()) {
+    return std::nullopt;
+  }
+  Cell chosen = free_pickups.front();
+  if (near) {
+    double best = std::numeric_limits<double>::infinity();
+    for (const Cell c : free_pickups) {
+      const double d = (frame_.to_world(c) - *near).norm();
+      if (d < best) {
+        best = d;
+        chosen = c;
+      }
+    }
+  } else {
+    chosen = free_pickups[uniform_index(rng_, free_pickups.size())];
+  }
+  WarehouseTask task;
+  task.id = tasks_.size();
+  task.pickup = chosen;
+  task.arrival_time = time;
+  tasks_.push_back(task);
+  return task.id;
+}
+
+bool WarehouseCoordinator::replan(std::size_t step, double time) {
+  mapf::Instance instance;
+  instance.map = warehouse_.map;
+  for (std::size_t i = 0; i < robots_.size(); ++i) {
+    instance.agents.push_back({planned_cell(i, step), robots_[i].goal});
+  }
+  const auto start = std::chrono::steady_clock::now();
+  auto try_prioritized = [&] {
+    mapf::PrioritizedOptions options;
+    options.order = mapf::PriorityOrder::kShortestFirst;
+    options.seed = config_.seed + step;
+    options.max_attempts = config_.prioritized_attempts;
+    return mapf::plan_prioritized(instance, options);
+  };
+  auto try_cbs = [&] {
+    mapf::CbsOptions options;
+    options.time_limit_s = config_.cbs_time_limit;
+    return mapf::ConflictBasedSearch(options).solve(instance);
+  };
+  mapf::PlannerResult planned;
+  if (config_.planner == "cbs") {
+    planned = try_cbs();
+    if (!planned.solved()) {
+      planned = try_prioritized();
+    }
+  } else {
+    planned = try_prioritized();
+    if (!planned.solved()) {
+      ++stats_.cbs_fallbacks;
+      planned = try_cbs();
+    }
+  }
+  const double ms =
+      std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
+  stats_.total_planning_ms += ms;
+  stats_.max_planning_ms = std::max(stats_.max_planning_ms, ms);
+  if (!planned.solved()) {
+    ++stats_.planning_failures;
+    events_.push_back({time, "planning failed: previous plan kept"});
+    return false;
+  }
+  plan_ = planned.paths;
+  plan_start_ = step;
+  ++stats_.replans;
+  stats_.plan_conflicts += mapf::count_conflicts(plan_);
+  return true;
+}
+
+void WarehouseCoordinator::process_step(std::size_t k, double t, std::span<const Vec2> positions) {
+  // Goal arrivals and service completion.
+  for (std::size_t i = 0; i < robots_.size(); ++i) {
+    Robot& r = robots_[i];
+    const Cell here = planned_cell(i, k);
+    const bool at_goal =
+        here == r.goal && (positions[i] - frame_.to_world(r.goal)).norm() < 0.3 * config_.cell_size;
+    switch (r.state) {
+      case WarehouseRobotState::kToPickup:
+        if (at_goal) {
+          r.state = WarehouseRobotState::kPicking;
+          r.service_until = k + config_.service_steps;
+        }
+        break;
+      case WarehouseRobotState::kPicking:
+        if (k >= r.service_until) {
+          std::optional<Cell> best;
+          double best_d = std::numeric_limits<double>::infinity();
+          for (const Cell st : stations_) {
+            const bool taken = std::any_of(robots_.begin(), robots_.end(), [&](const Robot& o) {
+              return (o.state == WarehouseRobotState::kToDropoff ||
+                      o.state == WarehouseRobotState::kDropping) &&
+                     o.goal == st;
+            });
+            const double d = grid_distance(here, st);
+            if (!taken && d < best_d) {
+              best_d = d;
+              best = st;
+            }
+          }
+          if (best) {
+            WarehouseTask& task = tasks_[*r.task];
+            task.picked_time = t;
+            task.dropoff = *best;
+            r.state = WarehouseRobotState::kToDropoff;
+            r.goal = *best;
+            dirty_ = true;
+          }
+        }
+        break;
+      case WarehouseRobotState::kToDropoff:
+        if (at_goal) {
+          r.state = WarehouseRobotState::kDropping;
+          r.service_until = k + config_.service_steps;
+        }
+        break;
+      case WarehouseRobotState::kDropping:
+        if (k >= r.service_until) {
+          WarehouseTask& task = tasks_[*r.task];
+          task.delivered_time = t;
+          ++stats_.tasks_completed;
+          events_.push_back(
+              {t, "robot " + std::to_string(i) + " delivered task " + std::to_string(task.id)});
+          r.task.reset();
+          r.state = WarehouseRobotState::kIdle;
+          r.goal = r.home;
+          dirty_ = true;
+        }
+        break;
+      case WarehouseRobotState::kIdle:
+        break;
+    }
+  }
+
+  // Allocation: idle robots x unassigned tasks, grid travel distance as cost.
+  std::vector<std::size_t> idle;
+  for (std::size_t i = 0; i < robots_.size(); ++i) {
+    if (robots_[i].state == WarehouseRobotState::kIdle) {
+      idle.push_back(i);
+    }
+  }
+  std::vector<std::size_t> open;
+  for (std::size_t j = 0; j < tasks_.size(); ++j) {
+    if (!tasks_[j].robot) {
+      open.push_back(j);
+    }
+  }
+  if (!idle.empty() && !open.empty()) {
+    allocation::CostMatrix costs(static_cast<Eigen::Index>(idle.size()),
+                                 static_cast<Eigen::Index>(open.size()));
+    for (std::size_t a = 0; a < idle.size(); ++a) {
+      for (std::size_t b = 0; b < open.size(); ++b) {
+        costs(static_cast<Eigen::Index>(a), static_cast<Eigen::Index>(b)) =
+            grid_distance(planned_cell(idle[a], k), tasks_[open[b]].pickup);
+      }
+    }
+    const auto assignment = allocation::solve_hungarian(costs);
+    for (std::size_t a = 0; a < idle.size(); ++a) {
+      if (const auto b = assignment.robot_to_task[a]) {
+        Robot& r = robots_[idle[a]];
+        WarehouseTask& task = tasks_[open[*b]];
+        task.robot = idle[a];
+        task.assigned_time = t;
+        r.task = open[*b];
+        r.state = WarehouseRobotState::kToPickup;
+        r.goal = task.pickup;
+        dirty_ = true;
+      }
+    }
+  }
+
+  if (dirty_ && replan(k, t)) {
+    dirty_ = false;
+  }
+}
+
+std::vector<Vec2> WarehouseCoordinator::update(double time, std::span<const Vec2> positions) {
+  if (positions.size() != robots_.size()) {
+    throw std::invalid_argument("WarehouseCoordinator::update: one position per robot required");
+  }
+  const auto k = static_cast<std::size_t>(std::floor(time / config_.step_duration + 1e-9));
+  if (!last_step_ || k > *last_step_) {
+    process_step(k, time, positions);
+    last_step_ = k;
+  }
+  const double phase = std::clamp(
+      (time - static_cast<double>(k) * config_.step_duration) / config_.step_duration, 0.0, 1.0);
+  std::vector<Vec2> preferred(robots_.size());
+  for (std::size_t i = 0; i < robots_.size(); ++i) {
+    const Vec2 a = frame_.to_world(planned_cell(i, k));
+    const Vec2 b = frame_.to_world(planned_cell(i, k + 1));
+    const Vec2 reference = a + phase * (b - a);
+    const Vec2 feedforward = (b - a) / config_.step_duration;
+    const Vec2 error = reference - positions[i];
+    stats_.max_tracking_error = std::max(stats_.max_tracking_error, error.norm());
+    preferred[i] = math::clamp_norm(feedforward + config_.tracking_gain * error, config_.max_speed);
+  }
+  return preferred;
+}
+
+std::vector<WarehouseRobotState> WarehouseCoordinator::robot_states() const {
+  std::vector<WarehouseRobotState> out;
+  for (const Robot& r : robots_) {
+    out.push_back(r.state);
+  }
+  return out;
+}
+
+std::vector<std::optional<std::size_t>> WarehouseCoordinator::robot_task_ids() const {
+  std::vector<std::optional<std::size_t>> out;
+  for (const Robot& r : robots_) {
+    out.push_back(r.task ? std::optional<std::size_t>(tasks_[*r.task].id) : std::nullopt);
+  }
+  return out;
+}
+
+std::vector<Vec2> WarehouseCoordinator::planned_route(std::size_t robot, const Vec2& position,
+                                                      std::size_t steps) const {
+  const std::size_t k = last_step_.value_or(0);
+  std::vector<Vec2> route{position};
+  for (std::size_t s = 1; s <= steps; ++s) {
+    route.push_back(frame_.to_world(planned_cell(robot, k + s)));
+  }
+  return route;
+}
+
+std::vector<std::pair<double, Vec2>> WarehouseCoordinator::timed_plan(std::size_t robot) const {
+  std::vector<std::pair<double, Vec2>> out;
+  const auto& path = plan_.at(robot);
+  for (std::size_t s = 0; s < path.size(); ++s) {
+    out.emplace_back(static_cast<double>(plan_start_ + s) * config_.step_duration,
+                     frame_.to_world(path[s]));
+  }
+  return out;
+}
+
+// --- Simulated mission ----------------------------------------------------------------
+
 WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) {
-  if (cfg.num_robots == 0 || !(cfg.step_duration > 0.0) || !(cfg.dt > 0.0)) {
-    throw std::invalid_argument("warehouse mission: invalid configuration");
+  if (!(cfg.dt > 0.0)) {
+    throw std::invalid_argument("warehouse mission: dt must be positive");
   }
   const auto substeps = static_cast<std::size_t>(std::llround(cfg.step_duration / cfg.dt));
   if (substeps == 0 ||
       std::abs(static_cast<double>(substeps) * cfg.dt - cfg.step_duration) > 1e-9) {
     throw std::invalid_argument("warehouse mission: step_duration must be a multiple of dt");
   }
-
-  WarehouseMissionResult result;
-  result.warehouse = mapf::make_warehouse(cfg.layout);
-  const mapf::GridMap& map = result.warehouse.map;
-  result.frame = mapf::WorldFrame{Vec2::Zero(), cfg.cell_size};
-  const mapf::WorldFrame& frame = result.frame;
-  for (const Cell c : result.warehouse.stations) {
-    (c.x == 0 ? result.stations : result.homes).push_back(c);
-  }
-  if (result.homes.size() < cfg.num_robots) {
-    throw std::invalid_argument("warehouse mission: more robots than home cells");
-  }
-  std::mt19937_64 rng(cfg.seed);
-  DistanceCache distances(map);
-
-  // Robots start at evenly spread home cells.
-  const std::size_t n = cfg.num_robots;
-  std::vector<RobotPlanState> robots(n);
-  std::vector<Pose2> poses;
-  for (std::size_t i = 0; i < n; ++i) {
-    const std::size_t h = (i * result.homes.size()) / n;
-    robots[i].home = result.homes[h];
-    robots[i].goal = robots[i].home;
-    poses.push_back({frame.to_world(robots[i].home), math::kPi});
-  }
+  WarehouseCoordinator coordinator(cfg);
+  const std::size_t n = coordinator.num_robots();
 
   // Task request times: an initial batch, then a Poisson process.
+  std::mt19937_64 arrivals(cfg.seed ^ 0xA5A5A5A5ULL);
   std::vector<double> request_times(cfg.initial_tasks, 0.0);
   if (cfg.arrival_rate > 0.0) {
-    for (double t = exponential(rng, cfg.arrival_rate); t < cfg.arrival_horizon;
-         t += exponential(rng, cfg.arrival_rate)) {
+    for (double t = exponential(arrivals, cfg.arrival_rate); t < cfg.arrival_horizon;
+         t += exponential(arrivals, cfg.arrival_rate)) {
       request_times.push_back(t);
     }
   }
@@ -132,21 +394,16 @@ WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) 
   simulation::WorldConfig world;
   world.dt = cfg.dt;
   world.record_every = cfg.record_every;
+  const auto& map = coordinator.warehouse().map;
   world.bounds =
       math::AABB{Vec2::Zero(), Vec2(map.width() * cfg.cell_size, map.height() * cfg.cell_size)};
-  for (int y = 0; y < map.height(); ++y) {
-    for (int x = 0; x < map.width(); ++x) {
-      if (!map.is_free({x, y})) {
-        const Vec2 lo = frame.origin + cfg.cell_size * Vec2(x, y);
-        world.obstacles.boxes.push_back({lo, lo + Vec2(cfg.cell_size, cfg.cell_size)});
-      }
-    }
-  }
+  world.obstacles = coordinator.shelf_obstacles();
   simulation::RobotSpec spec;
   spec.radius = cfg.robot_radius;
   spec.max_speed = cfg.max_speed;
   spec.max_acceleration = cfg.max_acceleration;
-  simulation::Simulator sim(world, std::vector<simulation::RobotSpec>(n, spec), poses);
+  simulation::Simulator sim(world, std::vector<simulation::RobotSpec>(n, spec),
+                            coordinator.home_poses());
 
   avoidance::AvoidanceConfig avoid_cfg;
   avoid_cfg.method = avoidance::AvoidanceMethod::kOrca;
@@ -160,245 +417,39 @@ WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) 
   const avoidance::CollisionAvoider avoider(
       avoid_cfg, cfg.avoid_shelves ? world.obstacles : math::ObstacleSet{});
 
-  std::vector<mapf::Path> plan(n);
-  for (std::size_t i = 0; i < n; ++i) {
-    plan[i] = {robots[i].home};
-  }
-  std::size_t plan_start = 0;
-  bool dirty = true;
-  double planning_ms_total = 0.0;
-  std::size_t planning_calls = 0;
-
-  auto planned_cell = [&](std::size_t i, std::size_t k) {
-    return mapf::position_at(plan[i], k >= plan_start ? k - plan_start : 0);
-  };
-  auto active_pickup = [&](Cell c) {
-    return std::any_of(result.tasks.begin(), result.tasks.end(), [&](const WarehouseTask& t) {
-      return t.delivered_time < 0.0 && t.pickup == c;
-    });
-  };
-  auto station_taken = [&](Cell c) {
-    return std::any_of(robots.begin(), robots.end(), [&](const RobotPlanState& r) {
-      return (r.state == WarehouseRobotState::kToDropoff ||
-              r.state == WarehouseRobotState::kDropping) &&
-             r.goal == c;
-    });
-  };
-  auto event = [&](double t, std::string label) {
-    result.events.push_back({t, std::move(label)});
-  };
-
-  auto replan = [&](std::size_t k, double t) {
-    mapf::Instance instance;
-    instance.map = map;
+  WarehouseMissionResult result;
+  result.warehouse = coordinator.warehouse();
+  result.frame = coordinator.frame();
+  result.homes = coordinator.homes();
+  result.stations = coordinator.stations();
+  auto record = [&] {
+    result.robot_states.push_back(coordinator.robot_states());
+    result.robot_tasks.push_back(coordinator.robot_task_ids());
+    std::vector<std::vector<Vec2>> routes;
     for (std::size_t i = 0; i < n; ++i) {
-      instance.agents.push_back({planned_cell(i, k), robots[i].goal});
+      routes.push_back(coordinator.planned_route(i, sim.robot(i).position, cfg.preview_steps));
     }
-    const auto start = std::chrono::steady_clock::now();
-    mapf::PlannerResult planned;
-    auto try_prioritized = [&] {
-      mapf::PrioritizedOptions options;
-      options.order = mapf::PriorityOrder::kShortestFirst;
-      options.seed = cfg.seed + k;
-      options.max_attempts = cfg.prioritized_attempts;
-      return mapf::plan_prioritized(instance, options);
-    };
-    auto try_cbs = [&] {
-      mapf::CbsOptions options;
-      options.time_limit_s = cfg.cbs_time_limit;
-      return mapf::ConflictBasedSearch(options).solve(instance);
-    };
-    if (cfg.planner == "cbs") {
-      planned = try_cbs();
-      if (!planned.solved()) {
-        planned = try_prioritized();
-      }
-    } else {
-      planned = try_prioritized();
-      if (!planned.solved()) {
-        ++result.cbs_fallbacks;
-        planned = try_cbs();
-      }
-    }
-    const double ms =
-        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - start).count();
-    planning_ms_total += ms;
-    ++planning_calls;
-    result.max_planning_ms = std::max(result.max_planning_ms, ms);
-    if (!planned.solved()) {
-      ++result.planning_failures;
-      event(t, "planning failed: previous plan kept");
-      return false;
-    }
-    plan = planned.paths;
-    plan_start = k;
-    ++result.replans;
-    result.plan_conflicts += mapf::count_conflicts(plan);
-    return true;
-  };
-
-  const auto total_steps = static_cast<std::size_t>(std::llround(cfg.duration / cfg.dt));
-  auto record = [&](std::size_t k) {
-    result.robot_states.emplace_back();
-    result.routes.emplace_back();
-    result.robot_tasks.emplace_back();
-    for (std::size_t i = 0; i < n; ++i) {
-      result.robot_states.back().push_back(robots[i].state);
-      std::vector<Vec2> route{sim.robot(i).position};
-      for (std::size_t s = 1; s <= cfg.preview_steps; ++s) {
-        route.push_back(frame.to_world(planned_cell(i, k + s)));
-      }
-      result.routes.back().push_back(std::move(route));
-      result.robot_tasks.back().push_back(
-          robots[i].task ? std::optional<std::size_t>(result.tasks[*robots[i].task].id)
-                         : std::nullopt);
-    }
+    result.routes.push_back(std::move(routes));
     std::vector<std::size_t> visible;
-    for (const auto& task : result.tasks) {
+    for (const auto& task : coordinator.tasks()) {
       if (task.delivered_time < 0.0) {
         visible.push_back(task.id);
       }
     }
     result.visible_tasks.push_back(std::move(visible));
   };
-  record(0);
+  record();
 
+  const auto total_steps = static_cast<std::size_t>(std::llround(cfg.duration / cfg.dt));
   for (std::size_t s = 0; s < total_steps; ++s) {
     const double t = sim.time();
-    const std::size_t k = s / substeps;
-
     if (s % substeps == 0) {
-      // --- Task requests ---------------------------------------------------------
       while (next_request < request_times.size() && request_times[next_request] <= t + 1e-9) {
-        std::vector<Cell> free_pickups;
-        for (const Cell c : result.warehouse.pickups) {
-          if (!active_pickup(c)) {
-            free_pickups.push_back(c);
-          }
-        }
-        if (!free_pickups.empty()) {
-          WarehouseTask task;
-          task.id = result.tasks.size();
-          task.pickup = free_pickups[uniform_index(rng, free_pickups.size())];
-          task.arrival_time = request_times[next_request];
-          result.tasks.push_back(task);
-        }
+        (void)coordinator.request_task(request_times[next_request]);
         ++next_request;
       }
-
-      // --- Goal arrivals and service completion -----------------------------------
-      for (std::size_t i = 0; i < n; ++i) {
-        RobotPlanState& r = robots[i];
-        const Cell here = planned_cell(i, k);
-        const bool at_goal =
-            here == r.goal &&
-            (sim.robot(i).position - frame.to_world(r.goal)).norm() < 0.3 * cfg.cell_size;
-        switch (r.state) {
-          case WarehouseRobotState::kToPickup:
-            if (at_goal) {
-              r.state = WarehouseRobotState::kPicking;
-              r.service_until = k + cfg.service_steps;
-            }
-            break;
-          case WarehouseRobotState::kPicking:
-            if (k >= r.service_until) {
-              std::optional<Cell> best;
-              double best_d = std::numeric_limits<double>::infinity();
-              for (const Cell st : result.stations) {
-                const double d = distances.distance(here, st);
-                if (!station_taken(st) && d < best_d) {
-                  best_d = d;
-                  best = st;
-                }
-              }
-              if (best) {
-                WarehouseTask& task = result.tasks[*r.task];
-                task.picked_time = t;
-                task.dropoff = *best;
-                r.state = WarehouseRobotState::kToDropoff;
-                r.goal = *best;
-                dirty = true;
-              }
-            }
-            break;
-          case WarehouseRobotState::kToDropoff:
-            if (at_goal) {
-              r.state = WarehouseRobotState::kDropping;
-              r.service_until = k + cfg.service_steps;
-            }
-            break;
-          case WarehouseRobotState::kDropping:
-            if (k >= r.service_until) {
-              WarehouseTask& task = result.tasks[*r.task];
-              task.delivered_time = t;
-              ++result.tasks_completed;
-              event(t, "robot " + std::to_string(i) + " delivered task " + std::to_string(task.id));
-              r.task.reset();
-              r.state = WarehouseRobotState::kIdle;
-              r.goal = r.home;
-              dirty = true;
-            }
-            break;
-          case WarehouseRobotState::kIdle:
-            break;
-        }
-      }
-
-      // --- Allocation: idle robots x unassigned tasks (grid travel cost) -----------
-      std::vector<std::size_t> idle;
-      for (std::size_t i = 0; i < n; ++i) {
-        if (robots[i].state == WarehouseRobotState::kIdle) {
-          idle.push_back(i);
-        }
-      }
-      std::vector<std::size_t> open;
-      for (std::size_t j = 0; j < result.tasks.size(); ++j) {
-        if (!result.tasks[j].robot) {
-          open.push_back(j);
-        }
-      }
-      if (!idle.empty() && !open.empty()) {
-        allocation::CostMatrix costs(static_cast<Eigen::Index>(idle.size()),
-                                     static_cast<Eigen::Index>(open.size()));
-        for (std::size_t a = 0; a < idle.size(); ++a) {
-          for (std::size_t b = 0; b < open.size(); ++b) {
-            costs(static_cast<Eigen::Index>(a), static_cast<Eigen::Index>(b)) =
-                distances.distance(planned_cell(idle[a], k), result.tasks[open[b]].pickup);
-          }
-        }
-        const auto assignment = allocation::solve_hungarian(costs);
-        for (std::size_t a = 0; a < idle.size(); ++a) {
-          if (const auto b = assignment.robot_to_task[a]) {
-            RobotPlanState& r = robots[idle[a]];
-            WarehouseTask& task = result.tasks[open[*b]];
-            task.robot = idle[a];
-            task.assigned_time = t;
-            r.task = open[*b];
-            r.state = WarehouseRobotState::kToPickup;
-            r.goal = task.pickup;
-            dirty = true;
-          }
-        }
-      }
-
-      // --- Multi-agent path finding ---------------------------------------------------
-      if (dirty && replan(k, t)) {
-        dirty = false;
-      }
     }
-
-    // --- Trajectory tracking + local avoidance ---------------------------------------
-    const double phase = (t - static_cast<double>(k) * cfg.step_duration) / cfg.step_duration;
-    std::vector<Vec2> preferred(n);
-    for (std::size_t i = 0; i < n; ++i) {
-      const Vec2 a = frame.to_world(planned_cell(i, k));
-      const Vec2 b = frame.to_world(planned_cell(i, k + 1));
-      const Vec2 reference = a + phase * (b - a);
-      const Vec2 feedforward = (b - a) / cfg.step_duration;
-      const Vec2 error = reference - sim.robot(i).position;
-      result.max_tracking_error = std::max(result.max_tracking_error, error.norm());
-      preferred[i] = math::clamp_norm(feedforward + cfg.tracking_gain * error, cfg.max_speed);
-    }
+    const auto preferred = coordinator.update(t, sim.positions());
     if (cfg.local_avoidance) {
       sim.step(avoidance::safe_velocities(avoider, sim, preferred));
       result.orca_infeasible += avoider.last_infeasible_count();
@@ -406,12 +457,25 @@ WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) 
       sim.step(preferred);
     }
     if (sim.step_count() % cfg.record_every == 0) {
-      record(sim.step_count() / substeps);
+      record();
     }
   }
 
+  const CoordinatorStats& stats = coordinator.stats();
   result.frames = sim.frames();
   result.metrics = sim.metrics();
+  result.tasks = coordinator.tasks();
+  result.events = coordinator.events();
+  result.tasks_completed = stats.tasks_completed;
+  result.replans = stats.replans;
+  result.planning_failures = stats.planning_failures;
+  result.cbs_fallbacks = stats.cbs_fallbacks;
+  result.max_planning_ms = stats.max_planning_ms;
+  result.plan_conflicts = stats.plan_conflicts;
+  result.max_tracking_error = stats.max_tracking_error;
+  const std::size_t planning_calls = stats.replans + stats.planning_failures;
+  result.mean_planning_ms =
+      planning_calls > 0 ? stats.total_planning_ms / static_cast<double>(planning_calls) : 0.0;
   double sum = 0.0;
   for (const auto& task : result.tasks) {
     if (task.delivered_time >= 0.0) {
@@ -421,10 +485,10 @@ WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) 
   result.mean_completion_time =
       result.tasks_completed > 0 ? sum / static_cast<double>(result.tasks_completed) : 0.0;
   result.throughput_per_minute = 60.0 * static_cast<double>(result.tasks_completed) / cfg.duration;
-  result.mean_planning_ms =
-      planning_calls > 0 ? planning_ms_total / static_cast<double>(planning_calls) : 0.0;
   return result;
 }
+
+// --- JSON ------------------------------------------------------------------------------
 
 WarehouseMissionConfig warehouse_mission_config_from_json(const io::Json& j) {
   WarehouseMissionConfig c;
