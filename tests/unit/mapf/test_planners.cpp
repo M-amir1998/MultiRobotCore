@@ -65,7 +65,7 @@ TEST(Prioritized, FailsOnPocketSwapForEveryOrder) {
   // The higher-priority agent ignores the other one and parks on its start
   // route, so neither ordering can succeed: PP is incomplete.
   const auto inst = pocket_swap();
-  for (const auto order : {std::vector<std::size_t>{0, 1}, std::vector<std::size_t>{1, 0}}) {
+  for (const auto& order : {std::vector<std::size_t>{0, 1}, std::vector<std::size_t>{1, 0}}) {
     mapf::PrioritizedOptions opt;
     opt.order = mapf::PriorityOrder::kCustom;
     opt.custom_order = order;
