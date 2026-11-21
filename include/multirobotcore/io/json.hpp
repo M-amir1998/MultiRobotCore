@@ -50,6 +50,12 @@ inline constexpr int kDefaultDecimals = 4;
                                   int decimals = kDefaultDecimals);
 
 [[nodiscard]] Vec2 vec2_from_json(const Json& value);
+/// {"min": [x, y], "max": [x, y]}
+[[nodiscard]] math::AABB aabb_from_json(const Json& value);
+/// {"center": [x, y], "radius": r}
+[[nodiscard]] math::Circle circle_from_json(const Json& value);
+/// {"circles": [...], "boxes": [...]} (both keys optional)
+[[nodiscard]] math::ObstacleSet obstacles_from_json(const Json& value);
 [[nodiscard]] std::vector<Vec2> vec2_list_from_json(const Json& value);
 
 /// Reads a JSON file (comments are not allowed). Throws std::runtime_error.

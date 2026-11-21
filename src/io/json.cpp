@@ -129,6 +129,29 @@ Vec2 vec2_from_json(const Json& value) {
   return Vec2(value[0].get<double>(), value[1].get<double>());
 }
 
+math::AABB aabb_from_json(const Json& value) {
+  return math::AABB{vec2_from_json(value.at("min")), vec2_from_json(value.at("max"))};
+}
+
+math::Circle circle_from_json(const Json& value) {
+  return math::Circle{vec2_from_json(value.at("center")), value.at("radius").get<double>()};
+}
+
+math::ObstacleSet obstacles_from_json(const Json& value) {
+  math::ObstacleSet out;
+  if (value.contains("circles")) {
+    for (const auto& c : value.at("circles")) {
+      out.circles.push_back(circle_from_json(c));
+    }
+  }
+  if (value.contains("boxes")) {
+    for (const auto& b : value.at("boxes")) {
+      out.boxes.push_back(aabb_from_json(b));
+    }
+  }
+  return out;
+}
+
 std::vector<Vec2> vec2_list_from_json(const Json& value) {
   std::vector<Vec2> out;
   for (const auto& v : value) {
