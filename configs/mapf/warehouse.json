@@ -1,0 +1,27 @@
+{
+  "description": "Robots leave the station columns for shelf access points in a warehouse with one-cell-wide aisles.",
+  "seed": 11,
+  "num_agents": 24,
+  "layout": {
+    "shelf_block_columns": 4,
+    "shelf_block_rows": 4,
+    "shelf_length": 5,
+    "shelf_depth": 2,
+    "aisle_width": 1,
+    "station_margin": 3
+  },
+  "world": {
+    "cell_size": 1.0,
+    "step_duration": 0.5
+  },
+  "prioritized": {
+    "order": "shortest_first",
+    "max_attempts": 20
+  },
+  "cbs": {
+    "objective": "sum_of_costs",
+    "time_limit_s": 20.0,
+    "max_high_level_nodes": 300000
+  },
+  "subset_agents": 12
+}

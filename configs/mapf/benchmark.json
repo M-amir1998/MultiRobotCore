@@ -1,0 +1,16 @@
+{
+  "description": "MAPF planner comparison across map families and team sizes. CBS runs are bounded by a wall-clock limit; a timeout is reported as such.",
+  "seeds": [1, 2, 3],
+  "cbs_time_limit_s": 3.0,
+  "restart_attempts": 10,
+  "maps": [
+    {"name": "open", "type": "open", "width": 32, "height": 32, "agents": [5, 10, 20, 40]},
+    {"name": "maze", "type": "maze", "width": 31, "height": 31, "loop_fraction": 0.15, "agents": [5, 10, 20]},
+    {"name": "warehouse", "type": "warehouse", "agents": [5, 10, 15, 20],
+     "layout": {"shelf_block_columns": 4, "shelf_block_rows": 4, "shelf_length": 5, "shelf_depth": 2,
+                "aisle_width": 1, "station_margin": 3}},
+    {"name": "corridor", "type": "corridor", "room_width": 6, "room_height": 6, "corridor_length": 8,
+     "agents": [2, 4, 6, 8]},
+    {"name": "congestion", "type": "open", "width": 8, "height": 8, "agents": [4, 8, 12, 16]}
+  ]
+}

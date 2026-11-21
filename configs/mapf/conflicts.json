@@ -1,0 +1,23 @@
+{
+  "description": "Four robots cross a one-lane plus-shaped intersection: independent shortest paths collide, CBS coordinates them using the arms as passing bays.",
+  "map": [
+    "######.######",
+    "######.######",
+    "######.######",
+    "######.######",
+    "######.######",
+    ".............",
+    "######.######",
+    "######.######",
+    "######.######",
+    "######.######",
+    "######.######"
+  ],
+  "agents": [
+    {"start": [0, 5], "goal": [12, 5]},
+    {"start": [12, 5], "goal": [0, 5]},
+    {"start": [6, 10], "goal": [6, 0]},
+    {"start": [6, 0], "goal": [6, 10]}
+  ],
+  "cbs": {"objective": "sum_of_costs", "time_limit_s": 60.0, "max_high_level_nodes": 500000}
+}
