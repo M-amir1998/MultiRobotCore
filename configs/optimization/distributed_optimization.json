@@ -1,0 +1,17 @@
+{
+  "seed": 5,
+  "num_robots": 10,
+  "field": {"min": [0.0, 0.0], "max": [20.0, 14.0]},
+  "target": [11.0, 7.5],
+  "bearing_noise": 0.03,
+  "comm_radius": 7.0,
+  "record_iterations": 120,
+  "dgd": {"step": 0.6, "max_iterations": 4000, "tolerance": 1e-4},
+  "admm": {"rho": 0.5, "max_iterations": 4000, "tolerance": 1e-4},
+  "benchmark": {
+    "seeds": 5,
+    "team_sizes": [5, 10, 20, 50],
+    "topologies": ["ring", "random_geometric"],
+    "tolerance": 1e-4
+  }
+}
