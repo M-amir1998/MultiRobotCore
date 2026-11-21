@@ -1,0 +1,61 @@
+---
+# Static analysis profile for MultiRobotCore library code.
+#
+# Enabled families catch real defects (bugprone, performance, concurrency) and
+# enforce modern C++ idioms. Checks disabled below are either stylistic noise
+# for numerical code (magic numbers in formulas, short mathematical names such
+# as x, p, L) or conflict with Eigen expression idioms.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  cert-err58-cpp,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-init-variables,
+  cppcoreguidelines-missing-std-forward,
+  cppcoreguidelines-prefer-member-initializer,
+  cppcoreguidelines-slicing,
+  cppcoreguidelines-special-member-functions,
+  cppcoreguidelines-virtual-class-destructor,
+  misc-const-correctness,
+  misc-definitions-in-headers,
+  misc-redundant-expression,
+  misc-static-assert,
+  misc-unused-alias-decls,
+  misc-unused-parameters,
+  misc-unused-using-decls,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  -modernize-avoid-c-arrays,
+  -modernize-use-nodiscard,
+  -modernize-use-designated-initializers,
+  -modernize-use-ranges,
+  -modernize-use-std-numbers,
+  performance-*,
+  -performance-enum-size,
+  readability-avoid-const-params-in-decls,
+  readability-container-size-empty,
+  readability-delete-null-pointer,
+  readability-duplicate-include,
+  readability-else-after-return,
+  readability-inconsistent-declaration-parameter-name,
+  readability-make-member-function-const,
+  readability-misleading-indentation,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-redundant-smartptr-get,
+  readability-redundant-string-cstr,
+  readability-simplify-boolean-expr,
+  readability-static-definition-in-anonymous-namespace,
+  readability-uniqueptr-delete-release
+WarningsAsErrors: ''
+HeaderFilterRegex: '.*include[/\\]multirobotcore[/\\].*'
+FormatStyle: file
+CheckOptions:
+  - key: misc-const-correctness.AnalyzeValues
+    value: false
+  - key: misc-const-correctness.WarnPointersAsValues
+    value: false
+...

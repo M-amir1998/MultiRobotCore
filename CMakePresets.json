@@ -1,0 +1,233 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "installDir": "${sourceDir}/build/install/${presetName}",
+      "cacheVariables": {
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "FETCHCONTENT_UPDATES_DISCONNECTED": "ON",
+        "MULTIROBOTCORE_DOWNLOAD_CACHE": "${sourceDir}/.deps/downloads"
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "displayName": "Debug (default compiler)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "displayName": "Release (default compiler)",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "ci-debug",
+      "inherits": "debug",
+      "displayName": "CI Debug (warnings as errors)",
+      "cacheVariables": {
+        "MULTIROBOTCORE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "ci-release",
+      "inherits": "release",
+      "displayName": "CI Release (warnings as errors)",
+      "cacheVariables": {
+        "MULTIROBOTCORE_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "sanitize",
+      "inherits": "base",
+      "displayName": "ASan + UBSan (clang++)",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "MULTIROBOTCORE_SANITIZERS": "address;undefined",
+        "MULTIROBOTCORE_BUILD_BENCHMARKS": "OFF",
+        "CMAKE_C_COMPILER": "clang"
+      }
+    },
+    {
+      "name": "sanitize-windows",
+      "inherits": "base",
+      "displayName": "ASan + UBSan (clang-cl)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "MULTIROBOTCORE_SANITIZERS": "address;undefined",
+        "MULTIROBOTCORE_BUILD_BENCHMARKS": "OFF",
+        "CMAKE_C_COMPILER": "clang-cl"
+      }
+    },
+    {
+      "name": "clang-release",
+      "inherits": "release",
+      "displayName": "Release (clang++)",
+      "condition": {
+        "type": "notEquals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang"
+      }
+    },
+    {
+      "name": "clang-cl-release",
+      "inherits": "release",
+      "displayName": "Release (clang-cl)",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "clang-cl",
+        "CMAKE_C_COMPILER": "clang-cl"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "ci-debug",
+      "configurePreset": "ci-debug"
+    },
+    {
+      "name": "ci-release",
+      "configurePreset": "ci-release"
+    },
+    {
+      "name": "sanitize",
+      "configurePreset": "sanitize"
+    },
+    {
+      "name": "sanitize-windows",
+      "configurePreset": "sanitize-windows"
+    },
+    {
+      "name": "clang-release",
+      "configurePreset": "clang-release"
+    },
+    {
+      "name": "clang-cl-release",
+      "configurePreset": "clang-cl-release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "base",
+      "hidden": true,
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error",
+        "stopOnFailure": false
+      }
+    },
+    {
+      "name": "debug",
+      "inherits": "base",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "inherits": "base",
+      "configurePreset": "release"
+    },
+    {
+      "name": "ci-debug",
+      "inherits": "base",
+      "configurePreset": "ci-debug"
+    },
+    {
+      "name": "ci-release",
+      "inherits": "base",
+      "configurePreset": "ci-release"
+    },
+    {
+      "name": "sanitize",
+      "inherits": "base",
+      "configurePreset": "sanitize"
+    },
+    {
+      "name": "sanitize-windows",
+      "inherits": "base",
+      "configurePreset": "sanitize-windows"
+    },
+    {
+      "name": "unit",
+      "inherits": "base",
+      "configurePreset": "ci-debug",
+      "filter": {
+        "include": {
+          "label": "unit"
+        }
+      }
+    },
+    {
+      "name": "numerical",
+      "inherits": "base",
+      "configurePreset": "ci-debug",
+      "filter": {
+        "include": {
+          "label": "numerical"
+        }
+      }
+    },
+    {
+      "name": "integration",
+      "inherits": "base",
+      "configurePreset": "ci-debug",
+      "filter": {
+        "include": {
+          "label": "integration"
+        }
+      }
+    },
+    {
+      "name": "regression",
+      "inherits": "base",
+      "configurePreset": "ci-debug",
+      "filter": {
+        "include": {
+          "label": "regression"
+        }
+      }
+    }
+  ]
+}

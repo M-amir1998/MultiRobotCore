@@ -1,0 +1,56 @@
+# Build trees
+/build/
+/build-*/
+/out/
+/install/
+CMakeUserPresets.json
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+Testing/
+
+# Dependency caches
+/.deps/
+/_deps/
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Simulation and render artefacts (regenerated from code)
+/results/
+/render_cache/
+*.frames/
+*.mp4
+*.mkv
+*.avi
+frame_*.png
+
+# ROS 2 / colcon
+/ros2/build/
+/ros2/install/
+/ros2/log/
+log/
+
+# IDE and OS state
+.vs/
+.vscode/
+.idea/
+*.swp
+*.user
+.DS_Store
+Thumbs.db
+
+# Local secrets (never committed)
+.env
+.env.*
+*.pem
+*.key
+id_rsa*
+id_ed25519*
