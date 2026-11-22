@@ -31,15 +31,24 @@ FLEET = {
 @pytest.mark.launch_test
 def generate_test_description():
     params = str(Path(get_package_share_directory("multirobotcore_ros")) / "config" / "warehouse.yaml")
-    sim = launch_ros.actions.Node(package="multirobotcore_ros", executable="fleet_simulator",
-                                  name="fleet_simulator",
-                                  parameters=[params, FLEET, {"real_time_factor": 4.0}])
-    coordinator = launch_ros.actions.Node(package="multirobotcore_ros", executable="warehouse_coordinator",
-                                          name="warehouse_coordinator",
-                                          parameters=[params, FLEET, {"use_sim_time": True, "initial_tasks": 6,
-                                                                       "task_rate": 0.0}])
-    safety = launch_ros.actions.Node(package="multirobotcore_ros", executable="orca_safety", name="orca_safety",
-                                     parameters=[params, FLEET, {"use_sim_time": True}])
+    sim = launch_ros.actions.Node(
+        package="multirobotcore_ros",
+        executable="fleet_simulator",
+        name="fleet_simulator",
+        parameters=[params, FLEET, {"real_time_factor": 4.0}],
+    )
+    coordinator = launch_ros.actions.Node(
+        package="multirobotcore_ros",
+        executable="warehouse_coordinator",
+        name="warehouse_coordinator",
+        parameters=[params, FLEET, {"use_sim_time": True, "initial_tasks": 6, "task_rate": 0.0}],
+    )
+    safety = launch_ros.actions.Node(
+        package="multirobotcore_ros",
+        executable="orca_safety",
+        name="orca_safety",
+        parameters=[params, FLEET, {"use_sim_time": True}],
+    )
     return launch.LaunchDescription([sim, coordinator, safety, launch_testing.actions.ReadyToTest()])
 
 
@@ -55,8 +64,12 @@ class TestWarehouseFleet(unittest.TestCase):
     def test_tasks_are_delivered_without_contacts(self):
         node = rclpy.create_node("warehouse_test_observer")
         latest = {}
-        node.create_subscription(String, "/fleet/status", lambda m: latest.update(fleet=json.loads(m.data)), 10)
-        node.create_subscription(String, "/fleet/sim_status", lambda m: latest.update(sim=json.loads(m.data)), 10)
+        node.create_subscription(
+            String, "/fleet/status", lambda m: latest.update(fleet=json.loads(m.data)), 10
+        )
+        node.create_subscription(
+            String, "/fleet/sim_status", lambda m: latest.update(sim=json.loads(m.data)), 10
+        )
         deadline = time.monotonic() + 150.0
         try:
             while time.monotonic() < deadline:

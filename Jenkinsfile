@@ -110,8 +110,8 @@ pipeline {
 
     stage('Python Ruff') {
       steps {
-        sh '$PYTHON -m ruff check python scripts'
-        sh '$PYTHON -m ruff format --check python scripts'
+        sh '$PYTHON -m ruff check python scripts ros2'
+        sh '$PYTHON -m ruff format --check python scripts ros2'
       }
     }
 

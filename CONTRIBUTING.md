@@ -17,7 +17,7 @@ count.
    ```bash
    scripts/ci/check_format.sh            # clang-format
    scripts/ci/run_clang_tidy.sh build/ci-debug
-   .venv/bin/python -m ruff check python scripts && .venv/bin/python -m ruff format --check python scripts
+   .venv/bin/python -m ruff check python scripts ros2 && .venv/bin/python -m ruff format --check python scripts ros2
    .venv/bin/python -m pytest
    python scripts/docs/generate_status.py --check
    ```

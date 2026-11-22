@@ -19,13 +19,33 @@ def generate_launch_description() -> LaunchDescription:
     share = Path(get_package_share_directory("multirobotcore_ros"))
     params = str(share / "config" / "warehouse.yaml")
     rtf = LaunchConfiguration("real_time_factor")
-    return LaunchDescription([
-        DeclareLaunchArgument("real_time_factor", default_value="1.0",
-                              description="simulation speed relative to wall-clock time"),
-        Node(package="multirobotcore_ros", executable="fleet_simulator", name="fleet_simulator",
-             parameters=[params, {"real_time_factor": rtf}], output="screen"),
-        Node(package="multirobotcore_ros", executable="warehouse_coordinator",
-             name="warehouse_coordinator", parameters=[params, {"use_sim_time": True}], output="screen"),
-        Node(package="multirobotcore_ros", executable="orca_safety", name="orca_safety",
-             parameters=[params, {"use_sim_time": True}], output="screen"),
-    ])
+    return LaunchDescription(
+        [
+            DeclareLaunchArgument(
+                "real_time_factor",
+                default_value="1.0",
+                description="simulation speed relative to wall-clock time",
+            ),
+            Node(
+                package="multirobotcore_ros",
+                executable="fleet_simulator",
+                name="fleet_simulator",
+                parameters=[params, {"real_time_factor": rtf}],
+                output="screen",
+            ),
+            Node(
+                package="multirobotcore_ros",
+                executable="warehouse_coordinator",
+                name="warehouse_coordinator",
+                parameters=[params, {"use_sim_time": True}],
+                output="screen",
+            ),
+            Node(
+                package="multirobotcore_ros",
+                executable="orca_safety",
+                name="orca_safety",
+                parameters=[params, {"use_sim_time": True}],
+                output="screen",
+            ),
+        ]
+    )
