@@ -183,7 +183,8 @@ class WarehouseCoordinator {
 
   [[nodiscard]] mapf::Cell planned_cell(std::size_t robot, std::size_t step) const;
   [[nodiscard]] double grid_distance(mapf::Cell from, mapf::Cell to);
-  void process_step(std::size_t step, double time, std::span<const Vec2> positions);
+  /// Allocation, goal bookkeeping and re-planning at MAPF step k (time t).
+  void process_step(std::size_t k, double t, std::span<const Vec2> positions);
   bool replan(std::size_t step, double time);
 
   WarehouseMissionConfig config_;
@@ -203,7 +204,7 @@ class WarehouseCoordinator {
   std::vector<std::pair<int, std::vector<int>>> distance_cache_;
 };
 
-[[nodiscard]] WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& config);
+[[nodiscard]] WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg);
 
 [[nodiscard]] WarehouseMissionConfig warehouse_mission_config_from_json(const io::Json& json);
 

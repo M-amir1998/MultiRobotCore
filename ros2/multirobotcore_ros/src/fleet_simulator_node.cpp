@@ -57,8 +57,8 @@ class FleetSimulatorNode : public rclcpp::Node {
     world.dt = config_.dt;
     world.record = false;
     const auto& map = geometry.warehouse().map;
-    world.bounds = mrc::math::AABB{mrc::Vec2::Zero(),
-                                   mrc::Vec2(map.width() * config_.cell_size, map.height() * config_.cell_size)};
+    world.bounds = mrc::math::AABB{mrc::Vec2::Zero(), mrc::Vec2(map.width() * config_.cell_size,
+                                                                map.height() * config_.cell_size)};
     world.obstacles = geometry.shelf_obstacles();
     mrc::simulation::RobotSpec spec;
     spec.radius = config_.robot_radius;
@@ -82,11 +82,12 @@ class FleetSimulatorNode : public rclcpp::Node {
     if (publish_clock_) {
       clock_pub_ = create_publisher<rosgraph_msgs::msg::Clock>("/clock", 10);
     }
-    const auto period = std::chrono::duration<double>(config_.dt / std::max(real_time_factor, 1e-3));
+    const auto period =
+        std::chrono::duration<double>(config_.dt / std::max(real_time_factor, 1e-3));
     timer_ = create_wall_timer(std::chrono::duration_cast<std::chrono::nanoseconds>(period),
                                [this] { step(); });
-    RCLCPP_INFO(get_logger(), "simulating %zu robots at dt=%.3f s, real-time factor %.1f", n, config_.dt,
-                real_time_factor);
+    RCLCPP_INFO(get_logger(), "simulating %zu robots at dt=%.3f s, real-time factor %.1f", n,
+                config_.dt, real_time_factor);
   }
 
  private:
@@ -125,9 +126,8 @@ class FleetSimulatorNode : public rclcpp::Node {
       const auto& m = sim_->metrics();
       std::ostringstream json;
       json << "{\"time\": " << now << ", \"robot_contacts\": " << m.robot_collisions
-           << ", \"obstacle_contacts\": " << m.obstacle_collisions
-           << ", \"min_pair_clearance\": " << (std::isfinite(m.min_pair_clearance) ? m.min_pair_clearance : -1.0)
-           << "}";
+           << ", \"obstacle_contacts\": " << m.obstacle_collisions << ", \"min_pair_clearance\": "
+           << (std::isfinite(m.min_pair_clearance) ? m.min_pair_clearance : -1.0) << "}";
       std_msgs::msg::String msg;
       msg.data = json.str();
       status_pub_->publish(msg);

@@ -80,10 +80,12 @@ AllocationUpdate DynamicTaskAllocator::update(std::span<const Robot> robots,
 
   // Assignment with inertia over the free robots and open tasks.
   std::vector<Robot> sub_robots;
+  sub_robots.reserve(free_robots.size());
   for (const std::size_t i : free_robots) {
     sub_robots.push_back(robots[i]);
   }
   std::vector<Task> sub_tasks;
+  sub_tasks.reserve(open.size());
   for (const std::size_t k : open) {
     sub_tasks.push_back(tasks_[k]);
   }

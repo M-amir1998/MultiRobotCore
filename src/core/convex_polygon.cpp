@@ -28,7 +28,7 @@ double characteristic_length(const std::vector<Vec2>& v) noexcept {
 }
 
 /// Removes consecutive (cyclic) vertices closer than `eps`.
-std::vector<Vec2> remove_duplicates(std::vector<Vec2> v, double eps) {
+std::vector<Vec2> remove_duplicates(const std::vector<Vec2>& v, double eps) {
   std::vector<Vec2> out;
   out.reserve(v.size());
   for (const Vec2& p : v) {
@@ -54,7 +54,7 @@ ConvexPolygon::ConvexPolygon(std::vector<Vec2> vertices) {
     }
   }
   const double eps = 1e-12 * characteristic_length(vertices);
-  vertices = remove_duplicates(std::move(vertices), eps);
+  vertices = remove_duplicates(vertices, eps);
   if (vertices.size() >= 3 && signed_area(vertices) < 0.0) {
     std::reverse(vertices.begin(), vertices.end());
   }
@@ -160,11 +160,11 @@ ConvexPolygon ConvexPolygon::clipped(const Vec2& normal, double offset) const {
     }
     if (current_inside != next_inside) {
       const double t = d_current / (d_current - d_next);
-      out.push_back(current + t * (next - current));
+      out.emplace_back(current + t * (next - current));
     }
   }
   const double eps = 1e-12 * characteristic_length(vertices_);
-  out = remove_duplicates(std::move(out), eps);
+  out = remove_duplicates(out, eps);
   if (out.size() < 3) {
     return {};
   }

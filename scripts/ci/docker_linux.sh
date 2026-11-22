@@ -22,7 +22,7 @@ set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
 apt-get install -y -qq --no-install-recommends ninja-build nlohmann-json3-dev libgtest-dev \
-  clang ros-${ROS_DISTRO}-launch-testing-ament-cmake ros-${ROS_DISTRO}-launch-testing-ros \
+  clang libclang-rt-18-dev ros-${ROS_DISTRO}-launch-testing-ament-cmake ros-${ROS_DISTRO}-launch-testing-ros \
   python3-pytest > /dev/null
 # Work on a copy with LF line endings, independent of the host checkout.
 mkdir -p /ws

@@ -88,7 +88,7 @@ void Simulator::set_status(std::size_t i, models::RobotStatus status) {
 }
 
 void Simulator::set_goal(std::size_t i, std::optional<Vec2> goal) {
-  robots_.at(i).goal = goal;
+  robots_.at(i).goal = std::move(goal);
 }
 
 void Simulator::set_task(std::size_t i, std::optional<std::size_t> task) {

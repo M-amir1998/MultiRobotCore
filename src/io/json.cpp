@@ -126,7 +126,7 @@ Vec2 vec2_from_json(const Json& value) {
   if (!value.is_array() || value.size() != 2) {
     throw std::invalid_argument("vec2_from_json: expected [x, y]");
   }
-  return Vec2(value[0].get<double>(), value[1].get<double>());
+  return {value[0].get<double>(), value[1].get<double>()};
 }
 
 math::AABB aabb_from_json(const Json& value) {

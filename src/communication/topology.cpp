@@ -91,7 +91,7 @@ graph::Graph CommunicationModel::build(std::span<const Vec2> positions, std::mt1
   graph::Graph g;
   switch (config_.model) {
     case TopologyModel::kFixed:
-      if (fixed_->num_nodes() != positions.size()) {
+      if (!fixed_ || fixed_->num_nodes() != positions.size()) {
         throw std::invalid_argument("CommunicationModel: fixed graph size mismatch");
       }
       g = *fixed_;

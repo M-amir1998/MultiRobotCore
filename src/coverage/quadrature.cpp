@@ -38,7 +38,7 @@ void integrate_triangle(const Vec2& a, const Vec2& b, const Vec2& c, int s, cons
   if (area <= 0.0) {
     return;
   }
-  const double sd = static_cast<double>(s);
+  const auto sd = static_cast<double>(s);
   const double sub_area = area / (sd * sd);
   const Vec2 e1 = (b - a) / sd;
   const Vec2 e2 = (c - a) / sd;

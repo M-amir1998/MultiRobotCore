@@ -122,11 +122,10 @@ TargetAssignment assign_targets(const OccupancyGrid& map, std::span<const GridCe
     case Strategy::kUtilityDiscount: {
       double max_gain = 0.0;
       double max_cost = 0.0;
-      for (std::size_t t = 0; t < candidates.size(); ++t) {
-        max_gain = std::max(max_gain, candidates[t].gain);
+      for (const auto& candidate : candidates) {
+        max_gain = std::max(max_gain, candidate.gain);
         for (std::size_t i = 0; i < n; ++i) {
-          max_cost =
-              std::max(max_cost, static_cast<double>(dist[i][map.index(candidates[t].cell)]));
+          max_cost = std::max(max_cost, static_cast<double>(dist[i][map.index(candidate.cell)]));
         }
       }
       std::vector<double> utility(candidates.size(), 1.0);

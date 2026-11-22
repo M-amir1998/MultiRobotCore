@@ -6,6 +6,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace multirobotcore::mapf {
 namespace {
@@ -36,14 +37,14 @@ GridMap::GridMap(int width, int height) : width_(width), height_(height) {
 
 GridMap GridMap::from_ascii(const std::vector<std::string>& rows) {
   if (rows.empty()) {
-    return GridMap(0, 0);
+    return {0, 0};
   }
   const auto height = static_cast<int>(rows.size());
   const auto width = static_cast<int>(rows.front().size());
   GridMap map(width, height);
   for (int r = 0; r < height; ++r) {
     const std::string& row = rows[static_cast<std::size_t>(r)];
-    if (static_cast<int>(row.size()) != width) {
+    if (std::cmp_not_equal(row.size(), width)) {
       throw std::invalid_argument("GridMap::from_ascii: rows must have equal length");
     }
     const int y = height - 1 - r;  // first text row is the top of the map
@@ -84,19 +85,19 @@ GridMap GridMap::parse_movingai(std::istream& in) {
   std::string line;
   std::getline(in, line);  // rest of the "map" line
   std::vector<std::string> rows;
-  while (static_cast<int>(rows.size()) < height && std::getline(in, line)) {
+  while (std::cmp_less(rows.size(), height) && std::getline(in, line)) {
     line = strip_cr(line);
     if (line.empty()) {
       continue;
     }
     rows.push_back(line);
   }
-  if (static_cast<int>(rows.size()) != height) {
+  if (std::cmp_not_equal(rows.size(), height)) {
     throw std::invalid_argument("GridMap::parse_movingai: expected " + std::to_string(height) +
                                 " map rows");
   }
   for (const auto& row : rows) {
-    if (static_cast<int>(row.size()) != width) {
+    if (std::cmp_not_equal(row.size(), width)) {
       throw std::invalid_argument("GridMap::parse_movingai: row width does not match header");
     }
   }

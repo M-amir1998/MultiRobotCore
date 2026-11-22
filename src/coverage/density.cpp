@@ -13,7 +13,7 @@ DensityFunction DensityFunction::uniform(double value) {
   if (!(value > 0.0) || !std::isfinite(value)) {
     throw std::invalid_argument("DensityFunction::uniform: value must be finite and positive");
   }
-  return DensityFunction({}, value);
+  return {{}, value};
 }
 
 DensityFunction DensityFunction::gaussian_mixture(std::vector<GaussianBump> bumps, double floor) {
@@ -31,7 +31,7 @@ DensityFunction DensityFunction::gaussian_mixture(std::vector<GaussianBump> bump
   if (!positive_somewhere) {
     throw std::invalid_argument("DensityFunction: density is identically zero");
   }
-  return DensityFunction(std::move(bumps), floor);
+  return {std::move(bumps), floor};
 }
 
 double DensityFunction::operator()(const Vec2& q) const noexcept {

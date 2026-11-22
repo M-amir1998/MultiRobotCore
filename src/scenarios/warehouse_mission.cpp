@@ -81,6 +81,7 @@ WarehouseCoordinator::WarehouseCoordinator(const WarehouseMissionConfig& config)
 
 std::vector<Pose2> WarehouseCoordinator::home_poses() const {
   std::vector<Pose2> poses;
+  poses.reserve(robots_.size());
   for (const Robot& r : robots_) {
     poses.push_back({frame_.to_world(r.home), math::kPi});
   }
@@ -332,6 +333,7 @@ std::vector<Vec2> WarehouseCoordinator::update(double time, std::span<const Vec2
 
 std::vector<WarehouseRobotState> WarehouseCoordinator::robot_states() const {
   std::vector<WarehouseRobotState> out;
+  out.reserve(robots_.size());
   for (const Robot& r : robots_) {
     out.push_back(r.state);
   }
@@ -340,6 +342,7 @@ std::vector<WarehouseRobotState> WarehouseCoordinator::robot_states() const {
 
 std::vector<std::optional<std::size_t>> WarehouseCoordinator::robot_task_ids() const {
   std::vector<std::optional<std::size_t>> out;
+  out.reserve(robots_.size());
   for (const Robot& r : robots_) {
     out.push_back(r.task ? std::optional<std::size_t>(tasks_[*r.task].id) : std::nullopt);
   }
@@ -359,6 +362,7 @@ std::vector<Vec2> WarehouseCoordinator::planned_route(std::size_t robot, const V
 std::vector<std::pair<double, Vec2>> WarehouseCoordinator::timed_plan(std::size_t robot) const {
   std::vector<std::pair<double, Vec2>> out;
   const auto& path = plan_.at(robot);
+  out.reserve(path.size());
   for (std::size_t s = 0; s < path.size(); ++s) {
     out.emplace_back(static_cast<double>(plan_start_ + s) * config_.step_duration,
                      frame_.to_world(path[s]));
@@ -384,9 +388,10 @@ WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) 
   std::mt19937_64 arrivals(cfg.seed ^ 0xA5A5A5A5ULL);
   std::vector<double> request_times(cfg.initial_tasks, 0.0);
   if (cfg.arrival_rate > 0.0) {
-    for (double t = exponential(arrivals, cfg.arrival_rate); t < cfg.arrival_horizon;
-         t += exponential(arrivals, cfg.arrival_rate)) {
+    double t = exponential(arrivals, cfg.arrival_rate);
+    while (t < cfg.arrival_horizon) {
       request_times.push_back(t);
+      t += exponential(arrivals, cfg.arrival_rate);
     }
   }
   std::size_t next_request = 0;
@@ -426,6 +431,7 @@ WarehouseMissionResult run_warehouse_mission(const WarehouseMissionConfig& cfg) 
     result.robot_states.push_back(coordinator.robot_states());
     result.robot_tasks.push_back(coordinator.robot_task_ids());
     std::vector<std::vector<Vec2>> routes;
+    routes.reserve(n);
     for (std::size_t i = 0; i < n; ++i) {
       routes.push_back(coordinator.planned_route(i, sim.robot(i).position, cfg.preview_steps));
     }

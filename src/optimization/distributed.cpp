@@ -166,7 +166,7 @@ DistributedRun decentralized_admm(const DistributedLeastSquares& problem, const 
   systems.reserve(n);
   for (std::size_t i = 0; i < n; ++i) {
     const auto& l = problem.local(i);
-    const double degree = static_cast<double>(graph.in_neighbors(i).size());
+    const auto degree = static_cast<double>(graph.in_neighbors(i).size());
     systems.emplace_back(l.A.transpose() * l.A +
                          2.0 * config.rho * degree * Eigen::MatrixXd::Identity(d, d));
   }

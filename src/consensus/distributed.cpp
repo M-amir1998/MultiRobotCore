@@ -15,7 +15,7 @@ Eigen::Index idx(std::size_t i) {
 }
 
 std::vector<double> row_to_vector(const Eigen::RowVectorXd& row) {
-  return std::vector<double>(row.data(), row.data() + row.size());
+  return {row.data(), row.data() + row.size()};
 }
 
 }  // namespace

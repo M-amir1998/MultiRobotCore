@@ -111,9 +111,9 @@ TEST(Avoidance, BoxDiscsCoverTheBoxConservatively) {
     // Every boundary point of the box is covered by some disc.
     for (double s = 0.0; s <= 1.0; s += 0.01) {
       for (const Vec2& p : {Vec2(box.min.x() + s * box.width(), box.min.y()),
-                           Vec2(box.min.x() + s * box.width(), box.max.y()),
-                           Vec2(box.min.x(), box.min.y() + s * box.height()),
-                           Vec2(box.max.x(), box.min.y() + s * box.height())}) {
+                            Vec2(box.min.x() + s * box.width(), box.max.y()),
+                            Vec2(box.min.x(), box.min.y() + s * box.height()),
+                            Vec2(box.max.x(), box.min.y() + s * box.height())}) {
         const bool covered = std::any_of(discs.begin(), discs.end(), [&](const math::Circle& c) {
           return (c.center - p).norm() <= c.radius + 1e-12;
         });

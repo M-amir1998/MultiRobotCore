@@ -30,7 +30,7 @@ OccupancyGrid OccupancyGrid::from_ascii(const std::vector<std::string>& rows, do
   OccupancyGrid grid(width, height, resolution, std::move(origin), Occupancy::kFree);
   for (int r = 0; r < height; ++r) {
     const std::string& row = rows[static_cast<std::size_t>(r)];
-    if (static_cast<int>(row.size()) != width) {
+    if (std::cmp_not_equal(row.size(), width)) {
       throw std::invalid_argument("OccupancyGrid::from_ascii: ragged rows");
     }
     for (int x = 0; x < width; ++x) {

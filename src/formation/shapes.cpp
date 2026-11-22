@@ -90,7 +90,8 @@ std::vector<Vec2> make_v_shape(std::size_t n, double spacing, double half_angle)
       out.emplace_back(0.0, 0.0);
       continue;
     }
-    const auto arm = static_cast<double>((k + 1) / 2);
+    const std::size_t arm_index = (k + 1) / 2;  // 1, 1, 2, 2, ... (left/right arms)
+    const auto arm = static_cast<double>(arm_index);
     const double side = (k % 2 == 1) ? 1.0 : -1.0;
     out.emplace_back(-arm * spacing * std::cos(half_angle),
                      side * arm * spacing * std::sin(half_angle));
@@ -145,7 +146,7 @@ std::vector<Vec2> relative_to_slot(std::span<const Vec2> offsets, std::size_t sl
     throw std::out_of_range("relative_to_slot: slot out of range");
   }
   std::vector<Vec2> out(offsets.begin(), offsets.end());
-  const Vec2 origin = offsets[slot];
+  const Vec2& origin = offsets[slot];
   for (Vec2& d : out) {
     d -= origin;
   }

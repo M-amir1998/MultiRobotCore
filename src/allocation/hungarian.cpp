@@ -99,7 +99,7 @@ Assignment solve_hungarian(const CostMatrix& costs) {
       }
     }
   }
-  const double k = static_cast<double>(std::min(n, m));
+  const auto k = static_cast<double>(std::min(n, m));
   const double penalty = 2.0 * k * std::max(largest, 1.0) + 1.0;
   Eigen::MatrixXd work = costs;
   if (any_infeasible) {

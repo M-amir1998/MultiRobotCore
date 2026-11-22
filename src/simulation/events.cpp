@@ -36,7 +36,7 @@ void EventSchedule::add(const ScheduledEvent& event) {
 std::vector<ScheduledEvent> EventSchedule::pop_due(double now) {
   std::vector<Entry> due;
   std::vector<Entry> remaining;
-  for (Entry& e : events_) {
+  for (const Entry& e : events_) {
     (e.event.time <= now ? due : remaining).push_back(e);
   }
   events_ = std::move(remaining);

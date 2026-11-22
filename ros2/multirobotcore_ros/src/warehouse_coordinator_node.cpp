@@ -94,10 +94,12 @@ class WarehouseCoordinatorNode : public rclcpp::Node {
           control();
         });
     request_sub_ = create_subscription<geometry_msgs::msg::PointStamped>(
-        "/fleet/task_requests", 10,
-        [this](const geometry_msgs::msg::PointStamped& msg) { external_requests_.push_back(from_point(msg.point)); });
+        "/fleet/task_requests", 10, [this](const geometry_msgs::msg::PointStamped& msg) {
+          external_requests_.push_back(from_point(msg.point));
+        });
     for (std::size_t i = 0; i < n; ++i) {
-      cmd_pubs_.push_back(create_publisher<geometry_msgs::msg::Twist>(robot_topic(i, "cmd_vel_ref"), 10));
+      cmd_pubs_.push_back(
+          create_publisher<geometry_msgs::msg::Twist>(robot_topic(i, "cmd_vel_ref"), 10));
       plan_pubs_.push_back(create_publisher<nav_msgs::msg::Path>(robot_topic(i, "plan"), 10));
     }
     marker_pub_ = create_publisher<visualization_msgs::msg::MarkerArray>("/fleet/markers", 10);

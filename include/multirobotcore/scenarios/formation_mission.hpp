@@ -98,7 +98,7 @@ struct FormationMissionResult {
   std::size_t final_leader{0};
 };
 
-[[nodiscard]] FormationMissionResult run_formation_mission(const FormationMissionConfig& config);
+[[nodiscard]] FormationMissionResult run_formation_mission(const FormationMissionConfig& cfg);
 
 /// Reads a configuration; absent keys keep their defaults.
 [[nodiscard]] FormationMissionConfig formation_mission_config_from_json(const io::Json& json);

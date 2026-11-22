@@ -24,7 +24,8 @@ TEST(Conversions, PoseTwistAndPoint) {
 }
 
 TEST(Conversions, TimedPathCarriesArrivalStamps) {
-  const std::vector<std::pair<double, Vec2>> plan{{0.0, {0.5, 0.5}}, {1.0, {1.5, 0.5}}, {2.5, {1.5, 1.5}}};
+  const std::vector<std::pair<double, Vec2>> plan{
+      {0.0, {0.5, 0.5}}, {1.0, {1.5, 0.5}}, {2.5, {1.5, 1.5}}};
   const auto path = mr::to_path(plan, "map", 100.0);
   ASSERT_EQ(path.poses.size(), 3U);
   EXPECT_EQ(path.header.frame_id, "map");
@@ -33,4 +34,6 @@ TEST(Conversions, TimedPathCarriesArrivalStamps) {
   EXPECT_DOUBLE_EQ(path.poses[1].pose.position.x, 1.5);
 }
 
-TEST(Conversions, RobotTopics) { EXPECT_EQ(mr::robot_topic(3, "cmd_vel"), "robot_3/cmd_vel"); }
+TEST(Conversions, RobotTopics) {
+  EXPECT_EQ(mr::robot_topic(3, "cmd_vel"), "robot_3/cmd_vel");
+}

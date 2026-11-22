@@ -79,7 +79,8 @@ class OrcaSafetyNode : public rclcpp::Node {
               control();
             }
           }));
-      cmd_pubs_.push_back(create_publisher<geometry_msgs::msg::Twist>(robot_topic(i, "cmd_vel"), 10));
+      cmd_pubs_.push_back(
+          create_publisher<geometry_msgs::msg::Twist>(robot_topic(i, "cmd_vel"), 10));
     }
     timer_ = rclcpp::create_timer(this, get_clock(),
                                   std::chrono::duration_cast<std::chrono::nanoseconds>(

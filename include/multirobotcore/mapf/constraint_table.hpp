@@ -41,7 +41,9 @@ struct TimedMoveHash {
 
 }  // namespace detail
 
-class ConstraintTable {
+// MSVC's unordered containers may allocate when moved; the implicit special
+// members are not relied upon to be noexcept.
+class ConstraintTable {  // NOLINT(bugprone-exception-escape)
  public:
   explicit ConstraintTable(const GridMap& map);
 

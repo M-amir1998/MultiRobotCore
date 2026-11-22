@@ -12,7 +12,7 @@
 namespace multirobotcore::mapf {
 
 GridMap make_open_map(int width, int height) {
-  return GridMap(width, height);
+  return {width, height};
 }
 
 GridMap make_random_map(int width, int height, double density, std::mt19937_64& rng) {

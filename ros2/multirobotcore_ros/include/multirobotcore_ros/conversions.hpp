@@ -36,7 +36,9 @@ inline geometry_msgs::msg::Point to_point(const Vec2& p) {
   return msg;
 }
 
-inline Vec2 from_point(const geometry_msgs::msg::Point& msg) { return {msg.x, msg.y}; }
+inline Vec2 from_point(const geometry_msgs::msg::Point& msg) {
+  return {msg.x, msg.y};
+}
 
 /// Planar yaw as a quaternion about +z.
 inline geometry_msgs::msg::Quaternion yaw_to_quaternion(double yaw) {
@@ -70,7 +72,9 @@ inline geometry_msgs::msg::Twist to_twist(const Vec2& v) {
   return msg;
 }
 
-inline Vec2 from_twist(const geometry_msgs::msg::Twist& msg) { return {msg.linear.x, msg.linear.y}; }
+inline Vec2 from_twist(const geometry_msgs::msg::Twist& msg) {
+  return {msg.linear.x, msg.linear.y};
+}
 
 /// Timed plan (time [s] since the coordinator started, position) as a
 /// nav_msgs/Path whose pose stamps carry the planned arrival times.
