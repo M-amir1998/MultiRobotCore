@@ -6,6 +6,7 @@
 #include "multirobotcore/allocation/hungarian.hpp"
 #include "multirobotcore/allocation/sequential_auction.hpp"
 #include "multirobotcore/graph/topologies.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/optimization/distributed.hpp"
 
 #include <benchmark/benchmark.h>
@@ -63,11 +64,11 @@ void BM_SequentialSingleItemAuction(benchmark::State& state) {
   std::uniform_real_distribution<double> u(0.0, 30.0);
   std::vector<al::Robot> robots(5);
   for (auto& r : robots) {
-    r.position = mrc::Vec2(u(rng), u(rng));
+    r.position = mrc::math::sample_vec2(rng, u);
   }
   std::vector<al::Task> tasks(static_cast<std::size_t>(state.range(0)));
   for (auto& t : tasks) {
-    t.position = mrc::Vec2(u(rng), u(rng));
+    t.position = mrc::math::sample_vec2(rng, u);
   }
   for (auto _ : state) {
     benchmark::DoNotOptimize(al::sequential_single_item_auction(robots, tasks));
@@ -81,7 +82,7 @@ void BM_AdmmBearingLocalisation(benchmark::State& state) {
   std::uniform_real_distribution<double> u(0.0, 20.0);
   std::vector<mrc::Vec2> robots;
   for (std::size_t i = 0; i < n; ++i) {
-    robots.emplace_back(u(rng), u(rng));
+    robots.push_back(mrc::math::sample_vec2(rng, u));
   }
   const auto problem = mrc::optimization::bearing_localization_problem(
       robots, mrc::optimization::measure_bearings(robots, {10.0, 10.0}, 0.02, rng));

@@ -16,6 +16,7 @@
 #include "multirobotcore/allocation/hungarian.hpp"
 #include "multirobotcore/allocation/sequential_auction.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <limits>
 #include <random>
@@ -36,7 +37,7 @@ std::vector<al::Robot> random_robots(std::size_t n, double side, std::mt19937_64
   std::vector<al::Robot> out(n);
   for (std::size_t i = 0; i < n; ++i) {
     out[i].id = i;
-    out[i].position = Vec2(u(rng), u(rng));
+    out[i].position = mrc::math::sample_vec2(rng, u);
   }
   return out;
 }
@@ -46,7 +47,7 @@ std::vector<al::Task> random_tasks(std::size_t m, double side, std::mt19937_64& 
   std::vector<al::Task> out(m);
   for (std::size_t j = 0; j < m; ++j) {
     out[j].id = j;
-    out[j].position = Vec2(u(rng), u(rng));
+    out[j].position = mrc::math::sample_vec2(rng, u);
   }
   return out;
 }
@@ -97,7 +98,7 @@ DynamicOutcome run_dynamic(std::size_t robots_n, double rate, double horizon, do
   al::DynamicTaskAllocator allocator(cfg);
   std::vector<Vec2> pos(robots_n);
   for (auto& p : pos) {
-    p = Vec2(u(rng), u(rng));
+    p = mrc::math::sample_vec2(rng, u);
   }
   std::vector<double> arrival_time;
   std::vector<std::optional<std::size_t>> current(robots_n);
@@ -112,7 +113,7 @@ DynamicOutcome run_dynamic(std::size_t robots_n, double rate, double horizon, do
     }
     while (t < horizon && t >= next_arrival) {
       al::Task task;
-      task.position = Vec2(u(rng), u(rng));
+      task.position = mrc::math::sample_vec2(rng, u);
       allocator.add_task(task);
       arrival_time.push_back(next_arrival);
       next_arrival += gap(rng);

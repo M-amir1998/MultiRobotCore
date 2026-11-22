@@ -7,6 +7,7 @@
 #include "multirobotcore/formation/safety.hpp"
 #include "multirobotcore/formation/transition.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/simulation/events.hpp"
 
 #include <algorithm>
@@ -37,7 +38,7 @@ std::vector<Pose2> initial_poses(const FormationMissionConfig& cfg, std::mt19937
   std::vector<Pose2> poses{{cfg.leader_path.front(), 0.0}};
   std::size_t attempts = 0;
   while (poses.size() < cfg.num_robots) {
-    const Vec2 p(ux(rng), uy(rng));
+    const Vec2 p = math::sample_vec2(rng, ux, uy);
     const bool clear =
         std::all_of(poses.begin(), poses.end(),
                     [&](const Pose2& q) { return (q.position - p).norm() >= min_spacing; }) &&
@@ -379,7 +380,7 @@ FormationMissionResult run_formation_mission(const FormationMissionConfig& cfg) 
     std::vector<Vec2> estimates = positions;
     if (cfg.measurement_noise > 0.0) {
       for (Vec2& p : estimates) {
-        p += cfg.measurement_noise * Vec2(noise(rng), noise(rng));
+        p += cfg.measurement_noise * math::sample_vec2(rng, noise);
       }
     }
     // Failed robots remain physically present and are avoided as obstacles.

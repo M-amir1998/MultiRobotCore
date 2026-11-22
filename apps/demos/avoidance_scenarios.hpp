@@ -8,6 +8,7 @@
 #include "multirobotcore/avoidance/simulation_adapter.hpp"
 #include "multirobotcore/io/json.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/simulation/simulator.hpp"
 
 #include <algorithm>
@@ -96,7 +97,7 @@ inline Scenario circle_swap(std::size_t n, double radius, double jitter, std::ui
   for (std::size_t i = 0; i < n; ++i) {
     const double a = mrc::math::kTwoPi * static_cast<double>(i) / static_cast<double>(n);
     const Vec2 p = radius * Vec2(std::cos(a), std::sin(a));
-    s.starts.push_back(p + Vec2(u(rng), u(rng)));
+    s.starts.push_back(p + mrc::math::sample_vec2(rng, u));
     s.goals.push_back(-p);
   }
   return s;
@@ -114,7 +115,7 @@ inline Scenario random_crossing(std::size_t n, double side, double min_spacing,
   std::uniform_real_distribution<double> u(-0.5 * side, 0.5 * side);
   auto sample = [&](std::vector<Vec2>& out) {
     for (std::size_t attempt = 0; out.size() < n && attempt < 200000; ++attempt) {
-      const Vec2 p(u(rng), u(rng));
+      const Vec2 p = mrc::math::sample_vec2(rng, u);
       if (std::all_of(out.begin(), out.end(),
                       [&](const Vec2& q) { return (p - q).norm() >= min_spacing; })) {
         out.push_back(p);
@@ -156,7 +157,7 @@ inline Scenario doorway(std::size_t n, double door_width, bool counterflow, std:
     const double y =
         spacing * (static_cast<double>(k % rows) - 0.5 * static_cast<double>(rows - 1));
     const Vec2 start(left ? -x : x, y);
-    s.starts.push_back(start + Vec2(u(rng), u(rng)));
+    s.starts.push_back(start + mrc::math::sample_vec2(rng, u));
     s.goals.emplace_back(left ? x + 1.0 : -x - 1.0, y);
     // Route through the door: approach point, then exit point.
     const double side = left ? -1.0 : 1.0;
@@ -181,7 +182,7 @@ inline Scenario corridor_swap(std::size_t per_side, double corridor_width, std::
     const bool left = i < per_side;
     const double offset = 0.8 * static_cast<double>(left ? i : i - per_side);
     const double x = 0.5 * length + 1.0 + offset;
-    s.starts.push_back(Vec2(left ? -x : x, 0.0) + Vec2(u(rng), u(rng)));
+    s.starts.push_back(Vec2(left ? -x : x, 0.0) + mrc::math::sample_vec2(rng, u));
     s.goals.emplace_back(left ? x : -x, 0.0);
   }
   return s;

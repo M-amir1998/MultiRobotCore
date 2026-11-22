@@ -18,6 +18,7 @@
 #include "multirobotcore/formation/shapes.hpp"
 #include "multirobotcore/graph/topologies.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/scenarios/formation_mission.hpp"
 
 #include <limits>
@@ -79,7 +80,7 @@ std::vector<Vec2> perturbed(const std::vector<Vec2>& p, double amount, std::mt19
   std::uniform_real_distribution<double> u(-amount, amount);
   std::vector<Vec2> out = p;
   for (Vec2& x : out) {
-    x += Vec2(u(rng), u(rng));
+    x += mrc::math::sample_vec2(rng, u);
   }
   return out;
 }

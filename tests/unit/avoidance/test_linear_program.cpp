@@ -1,4 +1,5 @@
 #include "multirobotcore/avoidance/linear_program.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -79,14 +80,14 @@ TEST(VelocityLp, MatchesBruteForceOnRandomFeasibleProblems) {
   const double step = 0.01;
   const auto samples = grid(speed, step);
   for (int trial = 0; trial < 120; ++trial) {
-    Vec2 interior(u(rng), u(rng));
+    Vec2 interior = multirobotcore::math::sample_vec2(rng, u);
     interior = interior.norm() > 0.9 ? Vec2(interior.normalized() * 0.9) : interior;
     std::vector<av::HalfPlane> c;
     const int m = count(rng);
     for (int k = 0; k < m; ++k) {
       c.push_back(random_half_plane_containing(interior, rng));
     }
-    const Vec2 pref(u(rng), u(rng));
+    const Vec2 pref = multirobotcore::math::sample_vec2(rng, u);
     const auto r = av::solve_velocity_lp(c, 0, pref, speed);
     ASSERT_TRUE(r.feasible) << "trial " << trial;
     EXPECT_LE(r.velocity.norm(), speed + 1e-9);

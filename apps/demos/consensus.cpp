@@ -15,6 +15,7 @@
 #include "multirobotcore/graph/topologies.hpp"
 #include "multirobotcore/io/json.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/simulation/simulator.hpp"
 
 #include <cmath>
@@ -155,7 +156,7 @@ std::vector<mrc::Pose2> connected_start(std::size_t n, double arena, double radi
     poses.clear();
     std::vector<mrc::Vec2> p;
     for (std::size_t i = 0; i < n; ++i) {
-      poses.push_back({mrc::Vec2(u(rng), u(rng)), 0.0});
+      poses.push_back({mrc::math::sample_vec2(rng, u), 0.0});
       p.push_back(poses.back().position);
     }
     bool separated = true;

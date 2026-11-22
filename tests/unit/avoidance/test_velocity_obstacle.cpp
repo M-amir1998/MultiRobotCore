@@ -1,5 +1,6 @@
 #include "multirobotcore/avoidance/velocity_obstacle.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -83,7 +84,7 @@ TEST(VelocityObstacle, ReciprocalConeHalvesTheEffort) {
   std::mt19937_64 rng(3);
   std::uniform_real_distribution<double> u(-2.0, 2.0);
   for (int k = 0; k < 2000; ++k) {
-    const Vec2 v(u(rng), u(rng));
+    const Vec2 v = multirobotcore::math::sample_vec2(rng, u);
     const auto in_rvo = rvo.classify(v, 1e-12);
     const auto in_vo = vo.classify(2.0 * v - a.velocity, 1e-12);
     if (in_rvo != av::VOMembership::kBoundary && in_vo != av::VOMembership::kBoundary) {
@@ -100,11 +101,11 @@ TEST(VelocityObstacle, MembershipAgreesWithCollisionTime) {
   const double tau = 2.5;
   int inside = 0;
   for (int k = 0; k < 5000; ++k) {
-    const Vec2 p(pos(rng), pos(rng));
+    const Vec2 p = multirobotcore::math::sample_vec2(rng, pos);
     if (p.norm() <= r) {
       continue;
     }
-    const Vec2 v(vel(rng), vel(rng));
+    const Vec2 v = multirobotcore::math::sample_vec2(rng, vel);
     const auto m = av::classify_relative_velocity(p, v, r, tau, 1e-9);
     const double tc = av::time_to_collision(p, v, r);
     if (m == av::VOMembership::kInside) {

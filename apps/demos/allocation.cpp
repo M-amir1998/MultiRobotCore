@@ -16,6 +16,7 @@
 #include "multirobotcore/allocation/hungarian.hpp"
 #include "multirobotcore/io/json.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/simulation/events.hpp"
 #include "multirobotcore/simulation/simulator.hpp"
 
@@ -39,7 +40,7 @@ std::vector<mrc::Vec2> scatter(std::size_t n, const mrc::math::AABB& box, double
   std::uniform_real_distribution<double> uy(box.min.y() + 0.5, box.max.y() - 0.5);
   std::vector<mrc::Vec2> out;
   while (out.size() < n) {
-    const mrc::Vec2 p(ux(rng), uy(rng));
+    const mrc::Vec2 p = mrc::math::sample_vec2(rng, ux, uy);
     if (std::all_of(out.begin(), out.end(),
                     [&](const mrc::Vec2& q) { return (q - p).norm() >= min_spacing; })) {
       out.push_back(p);

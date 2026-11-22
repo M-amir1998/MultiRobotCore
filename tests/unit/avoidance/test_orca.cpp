@@ -1,5 +1,6 @@
 #include "multirobotcore/avoidance/orca.hpp"
 #include "multirobotcore/avoidance/velocity_obstacle.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -56,8 +57,8 @@ TEST(Orca, ReciprocalChoicesAreCollisionFreeForTheHorizon) {
     const auto ca = av::orca_constraint(a, b, tau, 0.1);
     const auto cb = av::orca_constraint(b, a, tau, 0.1);
     for (int k = 0; k < 30; ++k) {
-      const Vec2 va(vel(rng) * 2.0, vel(rng) * 2.0);
-      const Vec2 vb(vel(rng) * 2.0, vel(rng) * 2.0);
+      const Vec2 va = 2.0 * multirobotcore::math::sample_vec2(rng, vel);
+      const Vec2 vb = 2.0 * multirobotcore::math::sample_vec2(rng, vel);
       if (ca.half_plane.violation(va) > 0.0 || cb.half_plane.violation(vb) > 0.0) {
         continue;
       }

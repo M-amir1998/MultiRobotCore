@@ -8,6 +8,7 @@
 #include "multirobotcore/formation/shapes.hpp"
 #include "multirobotcore/graph/connectivity.hpp"
 #include "multirobotcore/graph/topologies.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <benchmark/benchmark.h>
 
@@ -23,7 +24,7 @@ std::vector<mrc::Vec2> random_positions(std::size_t n, std::uint64_t seed) {
   std::uniform_real_distribution<double> u(0.0, 2.0 * std::sqrt(static_cast<double>(n)));
   std::vector<mrc::Vec2> p;
   for (std::size_t i = 0; i < n; ++i) {
-    p.emplace_back(u(rng), u(rng));
+    p.push_back(mrc::math::sample_vec2(rng, u));
   }
   return p;
 }

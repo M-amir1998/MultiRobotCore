@@ -12,6 +12,7 @@
 #include "multirobotcore/communication/topology.hpp"
 #include "multirobotcore/graph/connectivity.hpp"
 #include "multirobotcore/io/json.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/optimization/distributed.hpp"
 
 #include <iostream>
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
     for (int attempt = 0; attempt < 10000; ++attempt) {
       robots.clear();
       while (robots.size() < n) {
-        const mrc::Vec2 p(ux(rng), uy(rng));
+        const mrc::Vec2 p = mrc::math::sample_vec2(rng, ux, uy);
         if ((p - target).norm() > 3.0) {
           robots.push_back(p);
         }

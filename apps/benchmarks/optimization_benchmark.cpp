@@ -11,6 +11,7 @@
 #include "multirobotcore/communication/topology.hpp"
 #include "multirobotcore/graph/connectivity.hpp"
 #include "multirobotcore/graph/topologies.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/optimization/distributed.hpp"
 
 #include <random>
@@ -52,7 +53,7 @@ int main(int argc, char** argv) {
             for (int attempt = 0; attempt < 10000; ++attempt) {
               robots.clear();
               for (std::size_t i = 0; i < n; ++i) {
-                robots.emplace_back(u(rng), u(rng));
+                robots.push_back(mrc::math::sample_vec2(rng, u));
               }
               g = topo == "ring" ? mrc::graph::ring_graph(n)
                                  : mrc::communication::disk_graph(robots, 7.0);

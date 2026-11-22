@@ -38,7 +38,8 @@ First public release.
 - **Distributed optimisation:** distributed gradient descent, decentralised
   consensus ADMM, bearing-only localisation example.
 - **Simulation:** deterministic simulator, contact metrics, stall detection,
-  event-based failure injection.
+  event-based failure injection; portable sampling helpers
+  (`math/random.hpp`) with an explicit draw order.
 - **Integration:** warehouse coordinator and mission (allocation + MAPF +
   tracking + ORCA); optional ROS 2 Jazzy adapter with simulator, coordinator
   and ORCA safety nodes.

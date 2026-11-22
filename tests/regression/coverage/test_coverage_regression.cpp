@@ -1,8 +1,11 @@
 // Regression: a fixed Lloyd run must keep producing the same configuration.
 // Values were recorded from the reference implementation; the tolerance
-// allows for last-bit differences between math libraries.
+// allows for last-bit differences between math libraries. The initial
+// positions use the portable sampling helpers (std distributions and
+// unsequenced argument evaluation would make them compiler-dependent).
 
 #include "multirobotcore/coverage/coverage_control.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -14,10 +17,12 @@ using multirobotcore::Vec2;
 
 TEST(CoverageRegression, LloydRunIsReproducible) {
   std::mt19937_64 rng(2024);
-  std::uniform_real_distribution<double> u(0.0, 10.0);
+  const auto u = [](std::mt19937_64& g) {
+    return multirobotcore::math::uniform_real(g, 0.0, 10.0);
+  };
   std::vector<Vec2> p;
   for (int i = 0; i < 8; ++i) {
-    p.emplace_back(u(rng), u(rng));
+    p.push_back(multirobotcore::math::sample_vec2(rng, u));
   }
   const auto density =
       cov::DensityFunction::gaussian_mixture({{{7.0, 7.0}, 1.5, 4.0}, {{2.5, 3.0}, 1.0, 2.0}}, 0.2);

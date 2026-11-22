@@ -11,6 +11,7 @@
 
 #include "multirobotcore/coverage/coverage_control.hpp"
 #include "multirobotcore/io/json.hpp"
+#include "multirobotcore/math/random.hpp"
 #include "multirobotcore/simulation/simulator.hpp"
 
 #include <cmath>
@@ -45,7 +46,7 @@ std::vector<mrc::Vec2> deploy(const Json& cfg, std::mt19937_64& rng) {
   std::size_t attempts = 0;
   while (p.size() < n && attempts < 100000) {
     ++attempts;
-    const mrc::Vec2 q(ux(rng), uy(rng));
+    const mrc::Vec2 q = mrc::math::sample_vec2(rng, ux, uy);
     bool ok = true;
     for (const auto& other : p) {
       ok = ok && (q - other).norm() >= spacing;

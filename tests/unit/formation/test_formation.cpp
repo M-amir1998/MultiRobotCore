@@ -5,6 +5,7 @@
 #include "multirobotcore/graph/connectivity.hpp"
 #include "multirobotcore/graph/topologies.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 #include <Eigen/Dense>
@@ -56,7 +57,7 @@ std::vector<Vec2> perturbed(const std::vector<Vec2>& p, double amount, std::uint
   std::uniform_real_distribution<double> u(-amount, amount);
   std::vector<Vec2> out = p;
   for (Vec2& x : out) {
-    x += Vec2(u(rng), u(rng));
+    x += multirobotcore::math::sample_vec2(rng, u);
   }
   return out;
 }
@@ -233,8 +234,8 @@ TEST(Transition, AssignmentMinimisesSquaredDistance) {
     std::vector<Vec2> from(5);
     std::vector<Vec2> to(5);
     for (std::size_t i = 0; i < 5; ++i) {
-      from[i] = Vec2(u(rng), u(rng));
-      to[i] = Vec2(u(rng), u(rng));
+      from[i] = multirobotcore::math::sample_vec2(rng, u);
+      to[i] = multirobotcore::math::sample_vec2(rng, u);
     }
     const auto sigma = f::assign_slots(from, to);
     double cost = 0.0;

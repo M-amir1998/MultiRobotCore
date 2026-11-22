@@ -15,6 +15,7 @@
 #include "multirobotcore/consensus/distributed.hpp"
 #include "multirobotcore/graph/connectivity.hpp"
 #include "multirobotcore/graph/topologies.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <random>
 #include <string>
@@ -44,7 +45,7 @@ mrc::graph::Graph random_geometric(std::size_t n, std::mt19937_64& rng) {
   for (int attempt = 0; attempt < 1000; ++attempt) {
     std::vector<mrc::Vec2> p;
     for (std::size_t i = 0; i < n; ++i) {
-      p.emplace_back(u(rng), u(rng));
+      p.push_back(mrc::math::sample_vec2(rng, u));
     }
     auto g = mrc::communication::disk_graph(p, 3.2);
     if (mrc::graph::is_connected(g)) {

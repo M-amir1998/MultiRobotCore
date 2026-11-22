@@ -4,6 +4,7 @@
 
 #include "multirobotcore/avoidance/avoidance.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -84,7 +85,7 @@ TEST(AvoidanceRegression, SeededOrcaCrowdSwap) {
     const double a = multirobotcore::math::kTwoPi * i / 12.0;
     const Vec2 p = 5.0 * Vec2(std::cos(a), std::sin(a));
     goals.emplace_back(-p);
-    agents.push_back({p + Vec2(jitter(rng), jitter(rng)), Vec2::Zero(), 0.3});
+    agents.push_back({p + multirobotcore::math::sample_vec2(rng, jitter), Vec2::Zero(), 0.3});
   }
   const std::vector<double> speeds(12, 1.0);
   const double dt = config.time_step;

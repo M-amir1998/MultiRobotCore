@@ -13,6 +13,7 @@
 
 #include "multirobotcore/coverage/coverage_control.hpp"
 #include "multirobotcore/io/json.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -38,7 +39,7 @@ std::vector<mrc::Vec2> uniform_positions(std::size_t n, std::uint64_t seed) {
   std::uniform_real_distribution<double> u(0.0, kSide);
   std::vector<mrc::Vec2> p;
   for (std::size_t i = 0; i < n; ++i) {
-    p.emplace_back(u(rng), u(rng));
+    p.push_back(mrc::math::sample_vec2(rng, u));
   }
   return p;
 }

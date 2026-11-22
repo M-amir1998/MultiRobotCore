@@ -4,6 +4,7 @@
 #include "multirobotcore/allocation/dynamic.hpp"
 #include "multirobotcore/allocation/hungarian.hpp"
 #include "multirobotcore/allocation/sequential_auction.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -178,12 +179,12 @@ TEST(SequentialAuction, AllocatesEveryTaskWithinCapacity) {
   std::vector<a::Robot> robots(3);
   for (std::size_t r = 0; r < 3; ++r) {
     robots[r].id = r;
-    robots[r].position = Vec2(u(rng), u(rng));
+    robots[r].position = multirobotcore::math::sample_vec2(rng, u);
   }
   std::vector<a::Task> tasks(9);
   for (std::size_t k = 0; k < 9; ++k) {
     tasks[k].id = k;
-    tasks[k].position = Vec2(u(rng), u(rng));
+    tasks[k].position = multirobotcore::math::sample_vec2(rng, u);
   }
   for (const auto objective : {a::TeamObjective::kMiniSum, a::TeamObjective::kMiniMax}) {
     const auto plan = a::sequential_single_item_auction(robots, tasks, {objective, 4});

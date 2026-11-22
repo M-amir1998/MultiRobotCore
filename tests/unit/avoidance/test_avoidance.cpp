@@ -1,5 +1,6 @@
 #include "multirobotcore/avoidance/avoidance.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -203,7 +204,7 @@ TEST(Avoidance, CircleSwapOfEightRobotsWithOrca) {
     const double a = 2.0 * math::kPi * i / 8.0;
     const Vec2 p = 4.0 * Vec2(std::cos(a), std::sin(a));
     goals.emplace_back(-p);
-    agents.push_back({p + Vec2(jitter(rng), jitter(rng)), Vec2::Zero(), 0.3});
+    agents.push_back({p + math::sample_vec2(rng, jitter), Vec2::Zero(), 0.3});
   }
   const auto out = run(avoider, agents, goals, 1.0, 90.0);
   EXPECT_TRUE(out.all_reached);

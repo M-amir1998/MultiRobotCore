@@ -3,6 +3,7 @@
 #include "multirobotcore/coverage/quadrature.hpp"
 #include "multirobotcore/coverage/voronoi.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <gtest/gtest.h>
 
@@ -27,7 +28,7 @@ std::vector<Vec2> random_points(std::size_t n, double side, std::uint64_t seed) 
   std::uniform_real_distribution<double> u(0.0, side);
   std::vector<Vec2> p;
   for (std::size_t i = 0; i < n; ++i) {
-    p.emplace_back(u(rng), u(rng));
+    p.push_back(math::sample_vec2(rng, u));
   }
   return p;
 }

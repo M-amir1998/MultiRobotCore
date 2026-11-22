@@ -8,6 +8,7 @@
 #include "multirobotcore/mapf/instance.hpp"
 #include "multirobotcore/mapf/planners.hpp"
 #include "multirobotcore/math/numerics.hpp"
+#include "multirobotcore/math/random.hpp"
 
 #include <algorithm>
 #include <chrono>
@@ -23,9 +24,9 @@ using mapf::Cell;
 
 /// Portable sampling: std::mt19937_64 output is fully specified by the
 /// standard, the standard distributions are not, so results are identical
-/// across compilers only with explicit transforms like these.
+/// across compilers only with explicit transforms (math/random.hpp).
 double uniform01(std::mt19937_64& rng) {
-  return static_cast<double>(rng() >> 11U) * (1.0 / 9007199254740992.0);  // 53 bits
+  return math::uniform_unit(rng);
 }
 
 std::size_t uniform_index(std::mt19937_64& rng, std::size_t n) {

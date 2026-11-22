@@ -8,6 +8,8 @@
 // which depend only on the fully specified std::mt19937_64 engine, so that
 // generated maps and instances are identical on every platform.
 
+#include "multirobotcore/math/random.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <random>
@@ -23,7 +25,7 @@ namespace multirobotcore::mapf::detail {
 
 /// Uniform double in [0, 1) with 53 random bits.
 [[nodiscard]] inline double uniform_unit(std::mt19937_64& rng) {
-  return static_cast<double>(rng() >> 11U) * 0x1.0p-53;
+  return math::uniform_unit(rng);
 }
 
 /// Fisher-Yates shuffle.
