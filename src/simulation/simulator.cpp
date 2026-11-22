@@ -267,7 +267,7 @@ std::vector<std::size_t> Simulator::stalled_robots() const {
 }
 
 bool Simulator::stalled() const {
-  const std::size_t active = static_cast<std::size_t>(std::count_if(
+  const auto active = static_cast<std::size_t>(std::count_if(
       robots_.begin(), robots_.end(),
       [](const models::RobotState& r) { return r.status == models::RobotStatus::kActive; }));
   return active > 0 && stalled_robots().size() == active;
